@@ -293,6 +293,11 @@ app.get('/api/version', (req, res) => {
     res.json({ version: APP_VERSION });
 });
 
+// Dedicated screen route (query or path) for TV/Beamer
+app.get(['/screen', '/screen.html'], (req, res) => {
+    return res.sendFile(path.join(__dirname, 'public', 'screen.html'));
+});
+
 // Serve a dedicated read-only screen view when ?screen is present
 app.use((req, res, next) => {
     if (typeof req.query === 'object' && req.query.screen !== undefined) {
