@@ -28,6 +28,14 @@ document.addEventListener('DOMContentLoaded', () => {
       socket.emit('adminConnect', { lastSeenSeq });
     } catch (_) {}
 
+    // Reconnect automatically when server restarts or connection drops
+    socket.on('connect', () => {
+      try {
+        const lastSeenSeq = Number(localStorage.getItem('np_last_seq') || '0') || 0;
+        socket.emit('adminConnect', { lastSeenSeq });
+      } catch (_) {}
+    });
+
     setTimeout(() => { try { if (typeof setupAdminUI === 'function') setupAdminUI(); } catch (_) {} }, 100);
 
     const adminToggle = document.getElementById('adminPanelToggle');
