@@ -219,7 +219,7 @@ socket.on('questionSent', (data) => {
   currentQuestionEl.textContent = questionLabel;
   currentAreaEl.textContent = area ? '' + area : '';
   answersContainer.innerHTML = '— warte auf Antworten —';
-  votesBox.style.display = 'none';
+  if (votesBox) votesBox.style.display = 'none';
   if (pointsBox) pointsBox.style.display = 'none';
 
   // If ACTIVITY round, show selection overlay on screen as well
