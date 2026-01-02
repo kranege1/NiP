@@ -995,9 +995,24 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Bitte einen Namen eingeben!');
             return;
         }
+        // Auto-create room if admin not yet connected, so players can queue up
         if (!rooms[ACTIVE_ROOM]) {
-            socket.emit('error', 'Der Admin hat das Spiel noch nicht geöffnet.');
-            return;
+            rooms[ACTIVE_ROOM] = {
+                host: null,
+                players: {},
+                answers: [],
+                submitted: [],
+                currentQuestion: '',
+                currentQuestionArea: '',
+                realAnswer: '',
+                roundActive: false,
+                votes: {},
+                points: {},
+                pointsCommitted: false,
+                shuffledAnswers: null,
+                answersFinalized: false
+            };
+            log(`[AUTO-ROOM] Erstellt, Spieler wartet auf Admin: ${playerName}`);
         }
         
         // Prüfe ob dieser Spieler bereits existiert (Reconnect)
