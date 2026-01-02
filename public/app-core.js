@@ -403,13 +403,23 @@ document.addEventListener('visibilitychange', () => {
 
 window.addEventListener('online', () => attemptAutoJoin(true));
 
-// Version badge
+// Version badge with auto-refresh
+let lastKnownVersion = '';
 async function loadAppVersion() {
     try {
         const res = await fetch('/api/version', { cache: 'no-store' });
         if (res.ok) {
             const data = await res.json();
-            if (data && data.version) APP_VERSION = data.version;
+            if (data && data.version) {
+                APP_VERSION = data.version;
+                // Detect version change and reload if needed
+                if (lastKnownVersion && lastKnownVersion !== APP_VERSION) {
+                    console.log('[APP] New version detected:', APP_VERSION, '- reloading page...');
+                    location.reload();
+                    return;
+                }
+                lastKnownVersion = APP_VERSION;
+            }
         }
     } catch (e) {
         console.warn('[APP] Version konnte nicht geladen werden', e);
@@ -421,6 +431,8 @@ async function loadAppVersion() {
 }
 
 loadAppVersion();
+// Check for new version every 30 seconds
+setInterval(loadAppVersion, 30000);
 
 /* UI helpers */
 function toggleClearButtons() {
