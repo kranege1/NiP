@@ -1052,11 +1052,16 @@ io.on('connection', (socket) => {
         if (!rooms[roomCode].votes) rooms[roomCode].votes = {};
         if (typeof rooms[roomCode].pointsCommitted !== 'boolean') rooms[roomCode].pointsCommitted = false;
 
-        // emit updated player lists (normal list to all, detailed list to admin)
-        emitPlayerLists(roomCode);
-        broadcastUpdateSubmitted(roomCode);
-        emitWithSeqToRoom(roomCode, 'pointsUpdate', rooms[roomCode].points || {});
+        // emit joinedRoom FIRST so client knows it's in the room
         socket.emit('joinedRoom', { isHost });
+
+        // Then broadcast updated player lists to all clients in the room (including the newly joined one)
+        // Use setImmediate to ensure the client receives joinedRoom before player list updates
+        setImmediate(() => {
+            emitPlayerLists(roomCode);
+            broadcastUpdateSubmitted(roomCode);
+            emitWithSeqToRoom(roomCode, 'pointsUpdate', rooms[roomCode].points || {});
+        });
 
         // Send Grok permission status to the player
         if (!isHost && rooms[roomCode].players[socket.id]) {
