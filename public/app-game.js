@@ -6,44 +6,55 @@ function joinGame() {
     const name = document.getElementById('playerName').value.trim();
     if (!name) return alert('Name eingeben!');
     myPlayerName = name;
+    
+    console.log('[JOIN] Starting join process for:', name);
 
     // helper to emit join with throttling reset
     const emitJoin = () => {
         if (typeof lastAutoAttempt !== 'undefined') lastAutoAttempt = 0; // allow immediate retry
         try {
             socket.emit('playerJoin', { playerName: name, lastSeenSeq: lastSeq });
+            console.log('[JOIN] Emitted playerJoin');
         } catch (e) {
             console.warn('join emit failed', e);
         }
     };
 
-    // Emit immediately and start a short retry loop until server confirms via joinedRoom
+    // Switch UI FIRST, then emit
+    try {
+        const setup = document.getElementById('playerSetup');
+        const game = document.getElementById('playerGame');
+        const waiting = document.getElementById('waitingMessage');
+        
+        console.log('[JOIN] UI elements:', {setup: !!setup, game: !!game, waiting: !!waiting});
+        
+        if (setup) setup.style.display = 'none';
+        if (game) game.style.display = 'block';
+        if (waiting) {
+            waiting.style.display = 'block';
+            waiting.innerHTML = '<strong>🔍 Verbinde mit Server...</strong>';
+            console.log('[JOIN] Set waiting message');
+        }
+        const answerSection = document.getElementById('answerSection');
+        if (answerSection) answerSection.style.display = 'none';
+    } catch (e) {
+        console.error('[JOIN] UI switch failed:', e);
+    }
+
+    // Emit join request
     emitJoin();
 
     if (joinRetryInterval) clearInterval(joinRetryInterval);
     joinRetryInterval = setInterval(() => {
         if (typeof joined !== 'undefined' && joined) {
+            console.log('[JOIN] Join confirmed, stopping retry');
             clearInterval(joinRetryInterval);
             joinRetryInterval = null;
             return;
         }
+        console.log('[JOIN] Retry join...');
         emitJoin();
     }, 1500);
-
-    // Optimistic UI: zeige sofort Warte-Bildschirm, falls Server-Response verzögert
-    try {
-        const setup = document.getElementById('playerSetup');
-        const game = document.getElementById('playerGame');
-        const waiting = document.getElementById('waitingMessage');
-        if (setup) setup.style.display = 'none';
-        if (game) game.style.display = 'block';
-        if (waiting) {
-            waiting.style.display = 'block';
-            waiting.innerHTML = '🔍 Verbinde mit Server...';
-        }
-        const answerSection = document.getElementById('answerSection');
-        if (answerSection) answerSection.style.display = 'none';
-    } catch (_) {}
 }
 
 function isActivitySelectedInUI() {
