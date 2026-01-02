@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node tests/smoke_round.js",
     "test:smoke": "node tests/smoke_round.js",
-    "test:smoke:win": "node tests\\smoke_round.js"
+    "test:smoke:win": "node tests\\smoke_round.js",
+    "bump-version": "node scripts/bumpVersion.js"
   },
   "keywords": [],
   "author": "",
