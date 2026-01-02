@@ -140,6 +140,9 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = socketIo(server);
 
+// Force version bump on this deployment (2025-01-02 13:00)
+const server_deployment_id = '20250102_v3';
+
 // --- Event log for replay (1h retention) ---
 const EVENT_LOG_FILE = path.join(__dirname, 'event_log.json');
 const EVENT_RETENTION_MS = 60 * 60 * 1000; // 1 hour
