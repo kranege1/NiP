@@ -1,6 +1,7 @@
 /* Game logic: questions, answers, voting, voice/TTS */
 
 let joinRetryInterval = null; // re-emit join until acknowledged
+let joinAutoReloadTimeout = null; // fallback reload if join confirmation never arrives
 
 function joinGame() {
     const name = document.getElementById('playerName').value.trim();
@@ -28,6 +29,14 @@ function joinGame() {
         }
         emitJoin();
     }, 1500);
+
+    // Safety net: reload the page if keine Join-Bestätigung nach 6s
+    if (joinAutoReloadTimeout) clearTimeout(joinAutoReloadTimeout);
+    joinAutoReloadTimeout = setTimeout(() => {
+        if (typeof joined !== 'undefined' && !joined) {
+            try { location.reload(); } catch (_) {}
+        }
+    }, 6000);
 
     // Optimistic UI: zeige sofort Warte-Bildschirm, falls Server-Response verzögert
     try {

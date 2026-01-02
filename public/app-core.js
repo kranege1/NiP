@@ -149,8 +149,8 @@ function normalizeName(name) {
         .trim();
 }
 
-// Client-side color palette + deterministic picker (matches server)
-const CLIENT_COLOR_PALETTE = ['#e91e63','#9c27b0','#3f51b5','#03a9f4','#009688','#8bc34a','#ff9800','#795548','#607d8b','#f44336'];
+// Client-side color palette + deterministic picker (aligned with server palette order)
+const CLIENT_COLOR_PALETTE = ['#f44336','#e91e63','#9c27b0','#3f51b5','#03a9f4','#009688','#8bc34a','#ff9800','#607d8b','#9e847bff'];
 
 function clientPickColorForName(name) {
     // Deterministic fallback hash so missing server colors don't all become pink
@@ -533,6 +533,10 @@ socket.on('joinedRoom', ({ isHost: host }) => {
     if (typeof joinRetryInterval !== 'undefined' && joinRetryInterval) {
         clearInterval(joinRetryInterval);
         joinRetryInterval = null;
+    }
+    if (typeof joinAutoReloadTimeout !== 'undefined' && joinAutoReloadTimeout) {
+        clearTimeout(joinAutoReloadTimeout);
+        joinAutoReloadTimeout = null;
     }
     const nameEl = document.getElementById('playerName');
     if (nameEl) myPlayerName = nameEl.value.trim();
