@@ -2,11 +2,16 @@
 
 let joinRetryInterval = null; // re-emit join until acknowledged
 let joinAutoReloadTimeout = null; // fallback reload if join confirmation never arrives
+let joinCountdownInterval = null; // countdown display for join
 
 function joinGame() {
     const name = document.getElementById('playerName').value.trim();
     if (!name) return alert('Name eingeben!');
     myPlayerName = name;
+
+    // Show connection status in waiting message
+    const waiting = document.getElementById('waitingMessage');
+    if (waiting) waiting.innerHTML = '🔍 Suche Admin im Netzwerk...';
 
     // helper to emit join with throttling reset
     const emitJoin = () => {
@@ -20,6 +25,14 @@ function joinGame() {
 
     // Emit immediately and start a short retry loop until server confirms via joinedRoom
     emitJoin();
+
+    // Update status after first attempt
+    setTimeout(() => {
+        if (waiting && typeof joined !== 'undefined' && !joined) {
+            waiting.innerHTML = '⏳ Admin gefunden, verbinde...';
+        }
+    }, 500);
+
     if (joinRetryInterval) clearInterval(joinRetryInterval);
     joinRetryInterval = setInterval(() => {
         if (typeof joined !== 'undefined' && joined) {
@@ -30,20 +43,41 @@ function joinGame() {
         emitJoin();
     }, 1500);
 
-    // Safety net: reload the page if keine Join-Bestätigung nach 6s
+    // Countdown and reload: show countdown from 5 to 0, then refresh
     if (joinAutoReloadTimeout) clearTimeout(joinAutoReloadTimeout);
-    joinAutoReloadTimeout = setTimeout(() => {
-        if (typeof joined !== 'undefined' && !joined) {
-            try { location.reload(); } catch (_) {}
-        }
-    }, 6000);
+    if (joinCountdownInterval) clearInterval(joinCountdownInterval);
+    
+    let countdown = 5;
+    const startCountdown = setTimeout(() => {
+        if (waiting) waiting.innerHTML = `⏱️ Neu laden in ${countdown}s...`;
+        
+        joinCountdownInterval = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                clearInterval(joinCountdownInterval);
+                joinCountdownInterval = null;
+                if (waiting) waiting.innerHTML = '🔄 Verbinde...';
+                setTimeout(() => {
+                    try { location.reload(); } catch (_) {}
+                }, 500);
+            } else {
+                if (waiting) waiting.innerHTML = `⏱️ Neu laden in ${countdown}s...`;
+            }
+        }, 1000);
+    }, 5000);
+    
+    joinAutoReloadTimeout = startCountdown;
 
-    // Optimistic UI: zeige sofort Warte-Bildschirm, falls Server-Response verzögert
+    // Optimistic UI: clear player setup, show game view
     try {
         const setup = document.getElementById('playerSetup');
         const game = document.getElementById('playerGame');
-        const waiting = document.getElementById('waitingMessage');
-        if (setup) setup.style.display = 'none';
+        if (setup) {
+            // Clear input fields before hiding
+            const nameInput = document.getElementById('playerName');
+            if (nameInput) nameInput.value = '';
+            setup.style.display = 'none';
+        }
         if (game) game.style.display = 'block';
         if (waiting) waiting.style.display = 'block';
         const answerSection = document.getElementById('answerSection');

@@ -538,13 +538,21 @@ socket.on('joinedRoom', ({ isHost: host }) => {
         clearTimeout(joinAutoReloadTimeout);
         joinAutoReloadTimeout = null;
     }
+    if (typeof joinCountdownInterval !== 'undefined' && joinCountdownInterval) {
+        clearInterval(joinCountdownInterval);
+        joinCountdownInterval = null;
+    }
     const nameEl = document.getElementById('playerName');
     if (nameEl) myPlayerName = nameEl.value.trim();
     updateAnsweredHeaderNames();
     if (!isHost) {
         document.getElementById('playerSetup').style.display = 'none';
         document.getElementById('playerGame').style.display = 'block';
-        document.getElementById('waitingMessage').style.display = 'block';
+        const waitMsg = document.getElementById('waitingMessage');
+        if (waitMsg) {
+            waitMsg.style.display = 'block';
+            waitMsg.textContent = 'Warte auf die Frage vom Admin...';
+        }
         document.getElementById('answerSection').style.display = 'none';
     }
 });
