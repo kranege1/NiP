@@ -1,10 +1,33 @@
 /* Game logic: questions, answers, voting, voice/TTS */
 
+let joinRetryInterval = null; // re-emit join until acknowledged
+
 function joinGame() {
     const name = document.getElementById('playerName').value.trim();
     if (!name) return alert('Name eingeben!');
     myPlayerName = name;
-    socket.emit('playerJoin', { playerName: name, lastSeenSeq: lastSeq });
+
+    // helper to emit join with throttling reset
+    const emitJoin = () => {
+        if (typeof lastAutoAttempt !== 'undefined') lastAutoAttempt = 0; // allow immediate retry
+        try {
+            socket.emit('playerJoin', { playerName: name, lastSeenSeq: lastSeq });
+        } catch (e) {
+            console.warn('join emit failed', e);
+        }
+    };
+
+    // Emit immediately and start a short retry loop until server confirms via joinedRoom
+    emitJoin();
+    if (joinRetryInterval) clearInterval(joinRetryInterval);
+    joinRetryInterval = setInterval(() => {
+        if (typeof joined !== 'undefined' && joined) {
+            clearInterval(joinRetryInterval);
+            joinRetryInterval = null;
+            return;
+        }
+        emitJoin();
+    }, 1500);
 
     // Optimistic UI: zeige sofort Warte-Bildschirm, falls Server-Response verzögert
     try {

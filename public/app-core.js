@@ -377,7 +377,24 @@ socket.on('grokPermissionUpdate', (data) => {
     updateGrokButtonVisibility();
 });
 
-socket.on('error', (msg) => alert(msg));
+// Handle errors gracefully; auto-retry when admin is not yet online
+socket.on('error', (msg) => {
+    const text = String(msg || '').trim();
+    // Common case: admin not opened the game yet – retry automatically
+    if (text.toLowerCase().includes('admin') && text.toLowerCase().includes('noch nicht geöffnet')) {
+        const statusEl = document.getElementById('connectionStatusText');
+        if (statusEl) {
+            statusEl.innerHTML = '⏳ Warte auf Admin...';
+            statusEl.style.color = '#ffb74d';
+        }
+        // Try again after a short delay without bothering the user
+        setTimeout(() => {
+            try { lastAutoAttempt = 0; attemptAutoJoin(true); } catch (_) {}
+        }, 1500);
+        return;
+    }
+    alert(text || 'Unbekannter Fehler');
+});
 
 /* Auto-join logic */
 function attemptAutoJoin(force = false) {
@@ -501,6 +518,10 @@ socket.on('adminJoined', () => {
 socket.on('joinedRoom', ({ isHost: host }) => {
     isHost = host;
     joined = true;
+    if (typeof joinRetryInterval !== 'undefined' && joinRetryInterval) {
+        clearInterval(joinRetryInterval);
+        joinRetryInterval = null;
+    }
     const nameEl = document.getElementById('playerName');
     if (nameEl) myPlayerName = nameEl.value.trim();
     updateAnsweredHeaderNames();
