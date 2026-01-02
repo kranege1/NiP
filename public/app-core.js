@@ -1,5 +1,15 @@
+// Disable LAN discovery when running over HTTPS (avoid mixed-content)
+const IS_SECURE_PAGE = window.location.protocol === 'https:';
+const IS_LOCALHOST = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+const DISCOVERY_ENABLED = !IS_SECURE_PAGE && !IS_LOCALHOST;
+
 /* Server auto-discovery for resilient local network connections */
 async function discoverServerIP() {
+    if (!DISCOVERY_ENABLED) {
+        // On HTTPS production we stay on same origin to avoid mixed-content
+        try { localStorage.removeItem('np_server_ip'); } catch (_) {}
+        return null;
+    }
     // Try cached IP first
     const cachedIP = localStorage.getItem('np_server_ip');
     if (cachedIP) {
@@ -78,15 +88,17 @@ let socket = io(undefined, {
     reconnectionAttempts: Infinity
 });
 
-// Attempt IP discovery in background for future reconnects
-(async () => {
-    const discoveredIP = await discoverServerIP();
-    if (discoveredIP && discoveredIP !== 'localhost') {
-        console.log('[Discovery] Will use IP on next reconnect:', discoveredIP);
-        // Store for next reconnect
-        localStorage.setItem('np_server_ip', discoveredIP);
-    }
-})();
+// Attempt IP discovery in background for future reconnects (only on HTTP/local)
+if (DISCOVERY_ENABLED) {
+    (async () => {
+        const discoveredIP = await discoverServerIP();
+        if (discoveredIP && discoveredIP !== 'localhost') {
+            console.log('[Discovery] Will use IP on next reconnect:', discoveredIP);
+            // Store for next reconnect
+            localStorage.setItem('np_server_ip', discoveredIP);
+        }
+    })();
+}
 
 // Auto-refresh when coming back online after a disconnect
 let _wasOffline = false;
