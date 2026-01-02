@@ -411,6 +411,13 @@ socket.on('error', (msg) => {
 /* Auto-join logic */
 function attemptAutoJoin(force = false) {
     if (new URLSearchParams(window.location.search).get('admin') !== null) return;
+    
+    // Prevent auto-join after kick
+    if (sessionStorage.getItem('wasKicked') === 'true') {
+        console.log('[AUTO-JOIN] Blocked: Player was kicked');
+        return;
+    }
+    
     const now = Date.now();
     if (!force && now - lastAutoAttempt < 3000) return;
     lastAutoAttempt = now;
@@ -530,6 +537,8 @@ socket.on('adminJoined', () => {
 socket.on('joinedRoom', ({ isHost: host }) => {
     isHost = host;
     joined = true;
+    // Clear kick flag on successful join
+    sessionStorage.removeItem('wasKicked');
     if (typeof joinRetryInterval !== 'undefined' && joinRetryInterval) {
         clearInterval(joinRetryInterval);
         joinRetryInterval = null;
@@ -551,6 +560,12 @@ socket.on('joinedRoom', ({ isHost: host }) => {
 
 socket.on('playerRemoved', (data) => {
     alert(data.message || 'Du wurdest aus dem Spiel entfernt.');
+    // Mark as kicked to prevent auto-rejoin
+    sessionStorage.setItem('wasKicked', 'true');
+    // Clear player name
+    const nameEl = document.getElementById('playerName');
+    if (nameEl) nameEl.value = '';
+    myPlayerName = null;
     setTimeout(() => location.reload(), 1000);
 });
 
