@@ -5,5 +5,4 @@ node_modules/
 grok_usage.jsonl
 event_log.json
 grok_stats.json
-version_counter.json
 term_usage.json
