@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nobody is Perfect</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/terms/ACTIVITY.js"></script>
+    <script src="/terms/TABU.js"></script>
+    <script src="/terms/main.js"></script>
+    <script src="/terms/SPRACHEN.js"></script>
+    <script src="/terms/RATE_DAS_LAND.js"></script>
+    <script src="/terms/RATE_DIE_STADT.js"></script>
+    <script src="/terms.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div id="topLeftControls">
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px;">
+            <div id="connectionStatus"><span id="connectionStatusText">🔄 Prüfe Verbindung...</span></div>
+            <div id="grokStatus" style="display:none; font-size:11px; color:#aaf;">
+                <span id="grokStatusText">🤖 Grok: Lädt...</span>
+            </div>
+        </div>
+        <button id="resetTopBtn" class="reset icon-only" style="display:none;" title="Neu laden"><svg class="icon" aria-hidden="true"><use href="/icons.svg#reload"></use></svg></button>
+        <button id="adminPanelToggle" class="admin-toggle" style="display:none;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#settings"></use></svg> Admin</button>
+    </div>
+    
+    <!-- Grok usage notification container -->
+    <div id="grokNotificationContainer"></div>
+
+    <div id="playersPanel">
+        <button id="hardReloadBtn" class="reset tiny-btn" title="App neu starten"><svg class="icon" aria-hidden="true"><use href="/icons.svg#reload"></use></svg></button>
+        <h3>Aktuelle Spieler</h3>
+        <div id="playersList">Keine verbunden</div>
+        <button id="resetPointsBtn" class="reset" style="display:none; margin-top:10px; width:auto;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#reload"></use></svg> Punkte zurücksetzen</button>
+    </div>
+
+    <h1><svg class="icon" aria-hidden="true" style="vertical-align:middle;"><use href="/icons.svg#dice"></use></svg> Nobody is Perfect <span id="playerNameInHeader"></span></h1>
+    <div id="mainPlayerName" style="font-size:18px; color: #ffd; margin-top:6px;"></div>
+
+    <div id="adminView" style="display:none;">
+        <h2>Admin-Steuerung</h2>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+            <button class="random" id="randomLoadBtn"><svg class="icon" aria-hidden="true"><use href="/icons.svg#dice"></use></svg> Zufälligen Begriff laden</button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <label for="areaFilter" style="color:#fff; font-size:16px;">Bereich:</label>
+                <select id="areaFilter" style="padding:10px; font-size:16px; border-radius:8px; border:2px solid #666; background:#2a2a2a; color:#fff; cursor:pointer; min-width:300px;">
+                    <option value="ALLE">ALLE</option>
+                </select>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+                <label for="botCountInput" style="color:#fff; font-size:16px;">Bots:</label>
+                <input id="botCountInput" type="number" min="0" value="0" style="padding:8px; font-size:14px; width:80px; background:#222; color:#fff; border:2px solid #666; border-radius:6px;" />
+                <button id="setBotsBtn" class="admin" style="padding:8px;">Setze Bots</button>
+            </div>
+        </div>
+
+        <div class="input-wrapper">
+            <textarea id="questionInput" placeholder="Begriff / Frage eingeben" rows="2"></textarea>
+            <button class="clear-btn" id="clearQuestionBtn">×</button>
+            <div id="questionInputMask" class="activity-mask input-mask" aria-hidden="true">ACTIVITY-Runde – Frage verborgen</div>
+        </div>
+        <div id="questionAreaLabel" style="color:#ffd; font-size:14px; font-style:italic; margin-top:-8px; margin-bottom:8px; display:none;"></div>
+        <!-- Language buttons row (above send) -->
+        <div style="display:flex; justify-content:center; margin-bottom:8px;">
+            <div id="readQuestionBtnGroup" style="display:flex; gap:4px; flex-wrap:nowrap; align-items:center; justify-content:center; margin:0 auto;">
+                <button class="admin lang-btn" id="readQuestionDeBtn" style="padding:3px 6px; font-size:11px; line-height:1.05;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg> Deutsch</button>
+                <button class="admin lang-btn" id="readQuestionEnBtn" style="padding:3px 6px; font-size:11px; line-height:1.05;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg> Englisch</button>
+                <button class="admin lang-btn" id="readQuestionLtBtn" style="padding:3px 6px; font-size:11px; line-height:1.05;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg> Litauisch</button>
+                <button class="admin lang-btn" id="readQuestionElBtn" style="padding:3px 6px; font-size:11px; line-height:1.05;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg> Griechisch</button>
+                <button class="admin lang-btn" id="readQuestionHuBtn" style="padding:3px 6px; font-size:11px; line-height:1.05;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg> Ungarisch</button>
+                <button class="admin lang-btn" id="readQuestionJaBtn" style="padding:3px 6px; font-size:11px; line-height:1.05;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume-2"></use></svg> Japanisch</button>
+            </div>
+        </div>
+
+        <!-- Send button row -->
+        <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+            <button class="primary" id="sendQuestionBtn"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg> Frage an alle senden</button>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:8px; justify-content:center;">
+            <button id="toggleRealAnswerBtn" class="reset" style="width:auto; padding:10px;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#eye"></use></svg> Antwort einblenden</button>
+            <div id="realAnswerWrapper" class="input-wrapper" style="display:none;">
+                <textarea id="realAnswerInput" placeholder="Richtige Definition eingeben" rows="2"></textarea>
+                <button class="clear-btn" id="clearRealAnswerBtn">×</button>
+            </div>
+        </div>
+        <button class="admin" id="submitRealBtn"><svg class="icon" aria-hidden="true"><use href="/icons.svg#check"></use></svg> Richtige Antwort senden & mischen</button>
+        <br>
+        
+        <button class="primary" id="newRoundBtn"><svg class="icon" aria-hidden="true"><use href="/icons.svg#plus"></use></svg> Neue Runde starten</button>
+
+        <h3 id="adminAnsweredHeader">Spieler Aktionen (live) <span id="playerNameInHeaderAdmin"></span></h3>
+        <div id="submittedListAdmin">Warte auf Antworten...</div>
+
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:nowrap; justify-content:center; margin:15px auto; max-width:90%;">
+            <button id="startVotingBtn" class="primary" style="background:#2196F3; display:none; flex:1; min-width:0;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#vote"></use></svg> Abstimmung starten</button>
+            <button id="endVotingBtn" class="primary" style="background:#f44336; display:none; flex:1; min-width:0;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#stop"></use></svg> Abstimmung beenden</button>
+            <button id="readBtn" class="read" style="display:none; flex:1; min-width:0;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#volume"></use></svg> Alle vorlesen lassen</button>
+            <button id="presentBtn" class="primary" style="background:#ff9800; display:none; flex:1; min-width:0;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#megaphone"></use></svg> Ergebnis Präsentieren</button>
+        </div>
+
+        <h2 style="margin-top:40px">Aktuelle Frage:</h2>
+        <div id="currentQuestionAdminWrapper" class="admin-question-wrapper">
+            <div id="currentQuestionAdmin" style="margin-bottom:8px;">Noch keine Frage gesendet</div>
+            <div id="activityMask" class="activity-mask" aria-hidden="true">ACTIVITY-Runde – Begriff verborgen</div>
+        </div>
+        <div id="sprachenStatus" style="color:#ccc; font-size:12px; margin:-10px 0 18px; display:none;">SPRACHEN aktiv: Spieler hören nur zu.</div>
+        <div id="currentQuestionAreaAdmin" style="color:#ffd; font-size:14px; font-style:italic; margin-bottom:24px; display:none;"></div>
+
+        <div id="answersListWrapper" class="answers-list-wrapper">
+            <div id="answersList"></div>
+            <div id="answersMask" class="answers-mask" aria-hidden="true">Warte auf alle Antworten...</div>
+        </div>
+    </div>
+
+    <!-- Voice controls moved to admin overlay -->
+    <div id="voiceControls" style="display:none;">
+        <select id="languageSelect" style="padding:8px; font-size:14px; flex:1; min-width:200px;"><option value="">Alle Sprachen</option></select>
+        <select id="voiceSelect" style="padding:8px; font-size:14px; flex:1; min-width:200px;"></select>
+        <button id="testVoiceBtn" class="read" style="padding:8px; font-size:14px;">Test Stimme</button>
+        <label style="font-size:14px; display:flex; align-items:center; gap:6px;"><input type="checkbox" id="useSelectedVoice"> Nutze Auswahl</label>
+    </div>
+
+    <!-- insertion point for mobile layout: move status and players here on small screens -->
+    <div id="mobileInsertionPoint"></div>
+    <!-- container for players: place connection status and players list at the bottom for non-admins -->
+    <div id="bottomInfo"></div>
+
+    <div id="playerSetup">
+        <h2>Spieler: Gib deinen Namen ein</h2>
+        <div class="input-wrapper">
+            <textarea id="playerName" placeholder="Dein Name" rows="1"></textarea>
+            <button class="clear-btn" id="clearPlayerNameBtn">×</button>
+        </div>
+        <!-- overlay for hiding typed name when device is on the table -->
+        
+        <button class="primary" id="joinGameBtn">Beitreten</button>
+        <p>Warte auf den Admin...</p>
+    </div>
+
+    <div id="playerGame" style="display:none;">
+        <div id="currentQuestion" style="display:none;"></div>
+        <div id="currentQuestionArea" style="color:#ffd; font-size:28px; font-style:italic; margin-top:4px; margin-bottom:10px; display:none;"></div>
+        <div id="waitingMessage">Warte auf die Frage vom Admin...</div>
+
+        <div id="answerSection" style="display:none;">
+            <h3>Deine erfundene Antwort:</h3>
+            <div class="input-wrapper">
+                <button id="playerGrokBtn" class="grok-icon-btn" title="Antwort mit Grok verfeinern"><svg class="icon icon-lg" aria-hidden="true"><use href="/icons.svg#robot"></use></svg></button>
+                <textarea id="answerInput" placeholder="Hier kreativ lügen..." rows="2"></textarea>
+                <button class="clear-btn" id="clearAnswerBtn">×</button>
+            </div>
+            <div style="display:flex;gap:8px;flex-direction:column;align-items:center;">
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="toggleObscureBtn" class="reset" style="width:auto;">Sichtschutz an</button>
+                </div>
+                <button class="primary" id="submitAnswerBtn"><svg class="icon" aria-hidden="true"><use href="/icons.svg#send"></use></svg> Senden / Aktualisieren</button>
+            </div>
+        </div>
+
+        <div id="votingSection" style="display:none;">
+            <h3>Welche Antwort ist richtig?</h3>
+            <div id="votingOptions" style="display:flex; flex-direction:column; gap:10px; align-items:center; max-width:700px; margin:0 auto;"></div>
+        </div>
+
+        <h3 id="playerAnsweredHeader">Spieler Aktionen <span id="playerNameInHeader"></span></h3>
+        <div id="submittedList">Warte auf Frage...</div>
+    </div>
+
+    <!-- Activity selection overlay -->
+    <div id="activitySelectOverlay" class="activity-select-overlay" aria-hidden="true">
+        <div class="activity-select-backdrop"></div>
+        <div class="activity-select-card">
+            <div class="activity-select-title">Wer ist jetzt dran für Activity?</div>
+            <div id="activitySelectTicker" class="activity-select-ticker">–</div>
+            <button id="activitySelectClose" class="primary" style="margin-top:12px;">OK</button>
+        </div>
+    </div>
+
+    <!-- Result overlay (show answers + authors to players) -->
+    <div id="resultOverlay" class="result-overlay" aria-hidden="true">
+        <div class="result-backdrop"></div>
+        <div class="result-card">
+            <div class="result-title">Ergebnis</div>
+            <div id="resultList" class="result-list"></div>
+            <button id="resultClose" class="primary" style="margin-top:12px;">Schließen</button>
+        </div>
+    </div>
+
+    <!-- Admin Overlay -->
+    <div id="adminOverlay" class="admin-overlay hidden">
+        <div class="admin-overlay-backdrop"></div>
+        <div class="admin-overlay-box">
+            <div class="admin-overlay-header">
+                <span>Admin Einstellungen</span>
+                <button id="adminOverlayClose" class="overlay-close">×</button>
+            </div>
+            <div class="admin-overlay-content">
+                <div class="admin-overlay-section">
+                    <h3>Einstellungen</h3>
+                    <div id="adminSettingsSlot" class="admin-slot">Einstellungen werden geladen...</div>
+                </div>
+                <div class="admin-overlay-section">
+                    <h3>Vorlesen</h3>
+                    <div id="adminVoiceSlot" class="admin-slot">Voice-Steuerung wird geladen...</div>
+                </div>
+            </div>
+            <div class="admin-overlay-section" style="margin-top: 12px;">
+                <h3>Spieler Konfiguration</h3>
+                <p class="admin-hint"></p>
+                <div id="adminPlayersSlot" class="admin-slot">Spielerliste wird geladen...</div>
+            </div>
+        </div>
+    </div>
+
+        <div id="appVersion" class="version-badge"></div>
+
+    <!-- Modular JavaScript structure -->
+    <script src="/app-core.js" defer></script>
+    <script src="/app-ui.js" defer></script>
+    <script src="/app-admin.js" defer></script>
+    <script src="/app-game.js" defer></script>
+    <script src="/app-bootstrap.js" defer></script>
+</body>
+</html>

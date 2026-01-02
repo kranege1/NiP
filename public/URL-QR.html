@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL QR-Code Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 20px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-top: 0; }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-btn {
+            padding: 10px 20px;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .nav-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        .nav-btn:hover {
+            opacity: 0.8;
+        }
+        form { display: flex; flex-direction: column; }
+        label { margin-top: 15px; font-weight: bold; color: #555; }
+        input { 
+            padding: 10px; 
+            margin-top: 5px; 
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button { 
+            margin-top: 25px; 
+            padding: 12px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover { background: #0056b3; }
+        #qrcode { 
+            margin-top: 30px; 
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            display: none;
+        }
+        #qrcode.show { display: block; }
+        #qrcode canvas, #qrcode img {
+            max-width: 100%;
+            height: auto;
+        }
+        #info { 
+            margin-top: 15px; 
+            color: #666;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        #error { 
+            color: #dc3545; 
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffe6e6;
+            border-radius: 5px;
+            display: none;
+        }
+        #error.show { display: block; }
+        .download-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+        }
+        .download-btn.show { display: inline-block; }
+        .download-btn:hover { background: #218838; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 URL QR-Code Generator</h1>
+        
+        <div class="button-group">
+            <a href="/URL-QR.html" class="nav-btn active">🔗 URL-QR</a>
+            <a href="/WIFI-QR.html" class="nav-btn">📱 WLAN-QR</a>
+        </div>
+        
+        <p>Gib eine URL ein, um einen QR-Code zu erstellen. Scanne den Code mit deinem Smartphone, um die Webseite zu öffnen.</p>
+        
+        <form id="urlForm">
+            <label for="protocol">Protokoll:</label>
+            <select id="protocol" style="padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
+                <option value="https">HTTPS (verschlüsselt)</option>
+                <option value="http">HTTP (unverschlüsselt)</option>
+            </select>
+            
+            <label for="url">URL (Webadresse):</label>
+            <input 
+                type="text" 
+                id="url" 
+                placeholder="z.B. example.com oder www.example.com" 
+                required
+            >
+            
+            <button type="submit">QR-Code generieren</button>
+        </form>
+        
+        <div id="error"></div>
+        <div id="qrcode"></div>
+        <div id="info"></div>
+        <button class="download-btn" id="downloadBtn">⬇️ Download</button>
+    </div>
+    
+    <script>
+        // URL-Parameter lesen
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlParam = urlParams.get('url');
+        const protocolParam = urlParams.get('protocol') || 'https';
+        
+        const form = document.getElementById('urlForm');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const errorDiv = document.getElementById('error');
+        const infoDiv = document.getElementById('info');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const urlInput = document.getElementById('url');
+        const protocolSelect = document.getElementById('protocol');
+        
+        // Formularfelder mit Parametern vorausfüllen
+        if (urlParam) {
+            urlInput.value = urlParam;
+            protocolSelect.value = protocolParam;
+        }
+        
+        function generateQRCode() {
+            // Reset
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('show');
+            qrcodeDiv.classList.remove('show');
+            qrcodeDiv.innerHTML = '';
+            downloadBtn.classList.remove('show');
+            infoDiv.innerHTML = '';
+            
+            let url = urlInput.value.trim();
+            const protocol = protocolSelect.value;
+            
+            if (!url) {
+                errorDiv.textContent = '⚠️ URL ist erforderlich!';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            // URL normalisieren
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = protocol + '://' + url;
+            }
+            
+            console.log('Generiere QR-Code für:', url);
+            
+            try {
+                // QRCode Library verwenden
+                const qr = new QRCode(qrcodeDiv, {
+                    text: url,
+                    width: 300,
+                    height: 300,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                
+                // Download Button aktiv machen
+                setTimeout(function() {
+                    const canvas = qrcodeDiv.querySelector('canvas');
+                    if (canvas) {
+                        downloadBtn.classList.add('show');
+                        downloadBtn.onclick = function() {
+                            canvas.toBlob(function(blob) {
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(blob);
+                                link.download = 'url-qr-code.png';
+                                link.click();
+                            });
+                        };
+                    }
+                }, 500);
+                
+                // Info anzeigen
+                infoDiv.innerHTML = `<strong>URL:</strong><br><a href="${url}" target="_blank" style="color: #007bff; text-decoration: none;">${url}</a>`;
+                qrcodeDiv.classList.add('show');
+                
+            } catch (e) {
+                console.error('Fehler:', e);
+                errorDiv.textContent = '❌ Fehler beim Generieren: ' + e.message;
+                errorDiv.classList.add('show');
+            }
+        }
+        
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            generateQRCode();
+        });
+        
+        // Automatisch QR-Code generieren, wenn Parameter in der URL vorhanden sind
+        if (urlParam) {
+            setTimeout(generateQRCode, 500);
+        }
+    </script>
+</body>
+</html>
+</body>
+</html>

@@ -1,0 +1,102 @@
+{
+  "::ffff:192.168.0.113": {
+    "playerName": "Geri",
+    "lastAnswer": "Dänemark",
+    "lastSeen": "2025-12-30T17:23:40.812Z"
+  },
+  "::ffff:192.168.0.228": {
+    "playerName": "Evi",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-28T10:49:49.891Z"
+  },
+  "::ffff:192.168.0.170": {
+    "playerName": "Andi",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-21T18:42:48.779Z"
+  },
+  "::ffff:192.168.0.240": {
+    "playerName": "Evi",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-24T19:41:07.522Z"
+  },
+  "::ffff:192.168.0.127": {
+    "playerName": "",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-26T17:50:46.613Z"
+  },
+  "::ffff:192.168.0.203": {
+    "playerName": "Hias",
+    "lastAnswer": "Jjjj",
+    "lastSeen": "2025-12-26T09:01:22.354Z"
+  },
+  "::ffff:192.168.0.194": {
+    "playerName": "",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-21T17:31:01.651Z"
+  },
+  "::ffff:192.168.0.229": {
+    "playerName": "Ingrid",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-26T06:10:47.409Z"
+  },
+  "::ffff:192.168.0.89": {
+    "playerName": "",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-22T16:54:27.331Z"
+  },
+  "::ffff:192.168.0.210": {
+    "playerName": "Papa8",
+    "lastAnswer": "ssss",
+    "lastSeen": "2025-12-24T06:29:03.623Z"
+  },
+  "::ffff:192.168.0.23": {
+    "playerName": "Klaus",
+    "lastAnswer": "Abschneiden",
+    "lastSeen": "2025-12-24T19:39:15.035Z"
+  },
+  "::ffff:192.168.0.168": {
+    "playerName": "Mama",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-24T20:14:19.860Z"
+  },
+  "::ffff:192.168.0.174": {
+    "playerName": "Klaus",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-24T11:27:47.268Z"
+  },
+  "::ffff:192.168.0.225": {
+    "playerName": "Andi",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-24T19:28:56.013Z"
+  },
+  "::ffff:192.168.0.169": {
+    "playerName": "Andi",
+    "lastAnswer": "Gerät zur Stabilisierung von Farbtöpfen beim Malen.",
+    "lastSeen": "2025-12-26T17:04:53.289Z"
+  },
+  "::ffff:192.168.0.227": {
+    "playerName": "Evi",
+    "lastAnswer": "Was  ist  ein",
+    "lastSeen": "2025-12-26T17:05:03.364Z"
+  },
+  "::ffff:192.168.0.128": {
+    "playerName": "HIAS",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-30T03:42:30.539Z"
+  },
+  "::1": {
+    "playerName": "",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-31T08:53:53.689Z"
+  },
+  "::ffff:127.0.0.1": {
+    "playerName": "",
+    "lastAnswer": "",
+    "lastSeen": "2025-12-28T17:12:48.528Z"
+  },
+  "::ffff:192.168.0.51": {
+    "playerName": "Ata",
+    "lastAnswer": "Das Fahrrad steht vor dem Haus.",
+    "lastSeen": "2025-12-28T10:51:18.095Z"
+  }
+}

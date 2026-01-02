@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Nobody Is Perfect — Screen</title>
+  <style>
+    :root{
+      --bg:#061018;
+      --card:#0a1f2a;
+      --card-soft:rgba(10,31,42,0.86);
+      --accent:#4caf50;
+      --accent-2:#00d084;
+      --muted:#bfc9cf;
+      --text:#f6fbfc;
+      --shadow:0 14px 34px rgba(0,0,0,0.55);
+      --radius:14px;
+    }
+    html,body{height:100%;margin:0;padding:0}
+    /* use same background image/gradient as the main players view for consistency */
+    body{font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif;background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://thumbs.dreamstime.com/b/cozy-game-night-board-games-snacks-soft-cushions-cozy-game-night-board-games-snacks-soft-cushions-picture-354986542.jpg') center/cover fixed;color:var(--text);display:flex;align-items:stretch;overflow:hidden}
+    .version-badge{position:fixed;left:10px;bottom:8px;font-size:10px;color:rgba(255,255,255,0.55);letter-spacing:0.3px;pointer-events:none;-webkit-user-select:none;user-select:none;z-index:2000}
+    .wrap{width:100%;height:100%;display:grid;grid-template-rows:auto 1fr;grid-template-columns:1fr;gap:8px;padding:8px;box-sizing:border-box;overflow:hidden}
+    header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:linear-gradient(135deg, rgba(10,31,42,0.92), rgba(10,31,42,0.7));border-radius:var(--radius);box-shadow:var(--shadow);flex-shrink:0}
+    header h1{margin:0;font-size:clamp(18px,2.5vw,28px);letter-spacing:0.6px}
+    header .controls{display:flex;gap:10px;align-items:center}
+    #reloadBtn{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.08);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:700;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+    #reloadBtn:hover{background:rgba(255,255,255,0.06)}
+    /* floating fullscreen button bottom-right */
+    .fs-floating{position:fixed;right:24px;bottom:24px;z-index:9999;background:var(--accent);color:#00221a;border:none;padding:14px 18px;border-radius:12px;font-weight:900;cursor:pointer;font-size:18px;box-shadow:0 12px 24px rgba(0,0,0,0.6)}
+    main{display:grid;grid-template-columns:2.2fr 1fr;grid-template-rows:auto 1fr;gap:8px;align-items:start;padding:0;min-height:0;overflow:hidden}
+    /* make boxes slightly translucent so the background image is visible */
+    .box{background:linear-gradient(180deg, var(--card-soft), rgba(5,18,28,0.75));padding:12px 14px;border-radius:var(--radius);box-shadow:var(--shadow);-webkit-backdrop-filter: blur(6px);backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,0.04);overflow:hidden;display:flex;flex-direction:column}
+    .box-header{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-shrink:0}
+    .pill{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);padding:4px 10px;border-radius:999px;font-size:11px;color:var(--muted);white-space:nowrap}
+    .pill strong{color:var(--text);font-size:14px}
+    #questionBox{grid-column:1/2;grid-row:1/2;}
+    #questionBox h2{margin:0;font-size:clamp(22px,4vw,32px);line-height:1.1}
+    #currentArea{color:var(--muted);font-size:clamp(12px,1.4vw,16px);margin-top:3px}
+    .players{height:100%;display:flex;flex-direction:column;gap:8px;grid-column:2/3;grid-row:1/3;min-height:0}
+    #playersList{list-style:none;padding:0;margin:4px 0 0;font-size:clamp(12px,1.5vw,16px)}
+    .actions-table{width:100%;border-collapse:collapse;margin-top:4px}
+    .actions-table thead{background:rgba(255,255,255,0.04)}
+    .actions-table th,.actions-table td{padding:8px 10px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .actions-table th{font-weight:700;color:var(--muted);font-size:12px;letter-spacing:0.4px}
+    .actions-table td.name-cell{font-weight:700;color:var(--text)}
+    .actions-table td.points-cell{color:var(--accent-2);font-weight:800}
+    .status-yes{color:#00d084;font-weight:900}
+    .status-no{color:#ff6b6b;font-weight:900}
+    .rotated-label{display:inline-block;}
+    .actions-status{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+    .badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-weight:700;font-size:12px;letter-spacing:0.3px}
+    .badge.success{background:rgba(0,208,132,0.14);color:#00d084}
+    .badge.info{background:rgba(33,150,243,0.18);color:#7ec7ff}
+    .answers{display:flex;flex-direction:column;grid-column:1/2;grid-row:2/3;min-height:0;overflow:hidden;flex:1}
+    .answers pre{white-space:pre-wrap;margin:4px 0;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:12px;display:flex;align-items:center;gap:10px;font-size:clamp(14px,1.8vw,22px);border:1px solid rgba(255,255,255,0.04);line-height:1.2}
+    .answers pre.correct-answer{background:linear-gradient(135deg, rgba(76,175,80,0.25), rgba(76,175,80,0.15));border:2px solid #4caf50;box-shadow:0 0 20px rgba(76,175,80,0.4)}
+    .letter{display:inline-flex;align-items:center;justify-content:center;min-width:44px;max-width:44px;text-align:center;font-weight:900;background:rgba(255,255,255,0.06);padding:8px;border-radius:10px;font-size:16px;flex-shrink:0}
+    .vote-count{margin-left:auto;background:var(--accent); padding:6px 10px;border-radius:10px;color:#00221a;font-weight:800;font-size:13px;box-shadow:0 6px 14px rgba(0,0,0,0.35)}
+    .meta{color:var(--muted);font-size:14px;letter-spacing:0.1px}
+    #answersContainer{flex:1;overflow:auto;padding-right:4px;margin-top:2px;display:flex;flex-direction:column;min-height:0}
+    #votesBox,#pointsBox{background:transparent}
+    .players .actions-table { font-size: clamp(12px,1.3vw,14px); }
+    .players .actions-table thead th { padding: 9px 10px; font-size: 0.92em; }
+    .players .actions-table tbody td { padding: 9px 10px; font-size: 0.95em; }
+
+    /* Responsive: stack on narrow screens */
+    @media (max-width:900px){
+      main{grid-template-columns:1fr;grid-template-rows:auto auto auto}
+      header h1{font-size:22px}
+      .letter{width:44px;font-size:18px}
+      .players{grid-row:auto;grid-column:1/2}
+      #answersContainer{max-height:none}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" role="main">
+    <header>
+      <h1>Live Screen — Nobody Is Perfect</h1>
+      <div class="controls">
+        <button id="reloadBtn" title="Neu laden">Neu laden</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="box" id="questionBox">
+        <div class="box-header">
+          <div class="meta">Aktuelle Frage</div>
+          <div class="pill">Bereich: <strong id="currentArea"></strong></div>
+        </div>
+        <h2 id="currentQuestion">— keine Frage —</h2>
+      </section>
+
+      <aside class="box players">
+        <div class="box-header">
+          <div class="meta">Spieler & Status</div>
+          <div class="pill">Live-Board</div>
+        </div>
+        <div id="playersList"></div>
+      </aside>
+
+      <section class="box answers">
+        <div class="box-header">
+          <div class="meta">Eingegangene Antworten / Ergebnisse</div>
+          <div class="pill">Alle sehen dieselbe Reihenfolge</div>
+        </div>
+        <div id="answersContainer">— noch keine Antworten —</div>
+      </section>
+    </main>
+
+    <button id="fullscreenBtn" class="fs-floating">Vollbild</button>
+  </div>
+
+  <div id="screenVersion" class="version-badge"></div>
+
+    <!-- Activity selection overlay for screens -->
+    <div id="activitySelectOverlay" class="activity-select-overlay" aria-hidden="true">
+      <div class="activity-select-backdrop"></div>
+      <div class="activity-select-card">
+        <div id="activitySelectTicker" class="activity-select-ticker">–</div>
+      </div>
+    </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/terms/ACTIVITY.js"></script>
+  <script src="/terms/TABU.js"></script>
+  <script src="/terms/main.js"></script>
+  <script src="/terms/SPRACHEN.js"></script>
+  <script src="/terms/RATE_DAS_LAND.js"></script>
+  <script src="/terms/RATE_DIE_STADT.js"></script>
+  <script src="/terms.js"></script>
+  <script src="/screen.js"></script>
+</body>
+</html>

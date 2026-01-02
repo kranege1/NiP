@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WLAN QR-Code Generator</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 20px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-top: 0; }
+        form { display: flex; flex-direction: column; }
+        label { margin-top: 15px; font-weight: bold; color: #555; }
+        input, select { 
+            padding: 10px; 
+            margin-top: 5px; 
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button { 
+            margin-top: 25px; 
+            padding: 12px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover { background: #0056b3; }
+        #qrcode { 
+            margin-top: 30px; 
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            display: none;
+        }
+        #qrcode.show { display: block; }
+        #qrcode canvas {
+            margin: 0 auto;
+            display: block;
+        }
+        #info { 
+            margin-top: 15px; 
+            color: #666;
+            font-size: 14px;
+        }
+        #error { 
+            color: #dc3545; 
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffe6e6;
+            border-radius: 5px;
+            display: none;
+        }
+        #error.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 WLAN QR-Code Generator</h1>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <a href="/URL-QR.html" style="padding: 10px 20px; border: 2px solid #007bff; background: white; color: #007bff; cursor: pointer; border-radius: 5px; font-weight: bold; text-decoration: none; display: inline-block;">🔗 URL-QR</a>
+            <a href="/WIFI-QR.html" style="padding: 10px 20px; border: 2px solid #007bff; background: #007bff; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; text-decoration: none; display: inline-block;">📱 WLAN-QR</a>
+        </div>
+        
+        <p>Gib die WLAN-Daten ein, um einen QR-Code zu erstellen. Der Code kann mit dem Smartphone gescannt werden, um sich automatisch zu verbinden.</p>
+        
+        <form id="wifiForm">
+            <label for="ssid">SSID (Netzwerkname):</label>
+            <input type="text" id="ssid" placeholder="z.B. MeinWLAN" required>
+            
+            <label for="password">Passwort:</label>
+            <input type="text" id="password" placeholder="Leer lassen für offenes Netzwerk">
+            
+            <label for="encryption">Verschlüsselungstyp:</label>
+            <select id="encryption">
+                <option value="WPA">WPA/WPA2/WPA3 (Standard)</option>
+                <option value="WEP">WEP (veraltet)</option>
+                <option value="nopass">Kein Passwort (offen)</option>
+            </select>
+            
+            <button type="submit">QR-Code generieren</button>
+        </form>
+        
+        <div id="error"></div>
+        <div id="qrcode">
+            <canvas id="canvas"></canvas>
+            <div id="info"></div>
+        </div>
+    </div>
+    
+    <script>
+        // URL-Parameter lesen
+        const urlParams = new URLSearchParams(window.location.search);
+        const ssidParam = urlParams.get('ssid');
+        const passwordParam = urlParams.get('password') || '';
+        const encryptionParam = urlParams.get('encryption') || 'WPA';
+        
+        // Einfacher QR-Code Generator
+        function generateQRCode(text, size) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+            
+            const img = new Image();
+            const encodedText = encodeURIComponent(text);
+            img.crossOrigin = "anonymous";
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}`;
+            
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+            };
+            
+            img.onerror = function() {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, size, size);
+                ctx.fillStyle = '#000000';
+                ctx.font = '12px monospace';
+                ctx.fillText('QR-Code konnte nicht', 10, size/2 - 10);
+                ctx.fillText('geladen werden.', 10, size/2 + 10);
+                ctx.fillText('Offline-Modus?', 10, size/2 + 30);
+            };
+        }
+        
+        const form = document.getElementById('wifiForm');
+        const qrcodeDiv = document.getElementById('qrcode');
+        const errorDiv = document.getElementById('error');
+        const infoDiv = document.getElementById('info');
+        const ssidInput = document.getElementById('ssid');
+        const passwordInput = document.getElementById('password');
+        const encryptionSelect = document.getElementById('encryption');
+        
+        // Formularfelder mit Parametern vorausfüllen
+        if (ssidParam) {
+            ssidInput.value = ssidParam;
+            passwordInput.value = passwordParam;
+            encryptionSelect.value = encryptionParam;
+        }
+        
+        function generateWifiQR() {
+            // Fehler und alten QR-Code zurücksetzen
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('show');
+            qrcodeDiv.classList.remove('show');
+            
+            const ssid = ssidInput.value.trim();
+            let password = passwordInput.value.trim();
+            const encryption = encryptionSelect.value;
+            
+            if (!ssid) {
+                errorDiv.textContent = '⚠️ SSID ist erforderlich!';
+                errorDiv.classList.add('show');
+                return;
+            }
+            
+            // Für offenes Netzwerk Passwort ignorieren
+            if (encryption === 'nopass') {
+                password = '';
+            }
+            
+            // WLAN QR-Code Format: WIFI:S:<SSID>;T:<encryption>;P:<password>;;
+            const wifiString = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+            
+            console.log('Generiere QR-Code für:', wifiString);
+            
+            try {
+                generateQRCode(wifiString, 300);
+                
+                // Info anzeigen
+                const encType = encryption === 'nopass' ? 'Offen (kein Passwort)' : encryption;
+                infoDiv.innerHTML = `<strong>Netzwerk:</strong> ${ssid}<br><strong>Typ:</strong> ${encType}`;
+                
+                qrcodeDiv.classList.add('show');
+            } catch (e) {
+                console.error('Fehler beim Generieren:', e);
+                errorDiv.textContent = '❌ Fehler beim Generieren des QR-Codes: ' + e.message;
+                errorDiv.classList.add('show');
+            }
+        }
+        
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            generateWifiQR();
+        });
+        
+        // Automatisch QR-Code generieren, wenn Parameter in der URL vorhanden sind
+        if (ssidParam) {
+            setTimeout(generateWifiQR, 500);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="reload" viewBox="0 0 24 24">
+    <path d="M12 6V3L8 7l4 4V8a4 4 0 1 1-4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="admin" viewBox="0 0 24 24">
+    <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1 1 0 0 0-1.1-.2 6.6 6.6 0 0 1-2 .6 6.6 6.6 0 0 1-2-.6 1 1 0 0 0-1.1.2l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1 1 0 0 0 .2-1.1 6.6 6.6 0 0 1-.6-2 6.6 6.6 0 0 1 .6-2 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1 1 0 0 0 1.1.2 6.6 6.6 0 0 1 2-.6 6.6 6.6 0 0 1 2 .6 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1 1 0 0 0-.2 1.1 6.6 6.6 0 0 1 .6 2 6.6 6.6 0 0 1-.6 2z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="dice" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="18" height="18" rx="3" ry="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <circle cx="8" cy="8" r="1" fill="currentColor"/>
+    <circle cx="16" cy="8" r="1" fill="currentColor"/>
+    <circle cx="8" cy="16" r="1" fill="currentColor"/>
+    <circle cx="16" cy="16" r="1" fill="currentColor"/>
+  </symbol>
+
+  <symbol id="send" viewBox="0 0 24 24">
+    <path d="M22 2L11 13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M22 2l-7 20  -4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="eye" viewBox="0 0 24 24">
+    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  </symbol>
+
+  <symbol id="check" viewBox="0 0 24 24">
+    <path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="plus" viewBox="0 0 24 24">
+    <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="vote" viewBox="0 0 24 24">
+    <rect x="3" y="7" width="18" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/>
+    <path d="M7 11l3 3 7-7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="volume" viewBox="0 0 24 24">
+    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+    <path d="M19 9a5 5 0 0 1 0 6" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="megaphone" viewBox="0 0 24 24">
+    <path d="M3 11v2h6l8 5V6L9 11H3z" fill="none" stroke="currentColor" stroke-width="1.4"/>
+  </symbol>
+
+  <symbol id="robot" viewBox="0 0 24 24">
+    <rect x="6" y="7" width="12" height="9" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M9 11h.01M15 11h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M8 4v2M16 4v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  </symbol>
+
+  <symbol id="enter" viewBox="0 0 24 24">
+    <path d="M5 12h14M12 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+  <symbol id="stop" viewBox="0 0 24 24">
+    <rect x="6" y="6" width="12" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+  </symbol>
+
+  <symbol id="settings" viewBox="0 0 24 24">
+    <path d="M19.4 12.9c.04-.3.06-.61.06-.93s-.02-.63-.06-.93l2.11-1.65c.19-.15.24-.42.12-.63l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.027 7.027 0 0 0-1.6-.93l-.38-2.65A.5.5 0 0 0 12.5 2h-4a.5.5 0 0 0-.5.42l-.38 2.65c-.57.23-1.11.53-1.6.93l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.63L4.6 11.1c-.04.3-.06.61-.06.93s.02.63.06.93L2.49 14.6a.5.5 0 0 0-.12.63l2 3.46c.14.24.44.34.68.23l2.49-1c.49.4 1.03.7 1.6.93l.38 2.65c.05.28.28.48.56.48h4c.28 0 .51-.2.56-.48l.38-2.65c.57-.23 1.11-.53 1.6-.93l2.49 1c.24.11.54.01.68-.23l2-3.46a.5.5 0 0 0-.12-.63l-2.11-1.65zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+
+</svg>

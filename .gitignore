@@ -1,0 +1,9 @@
+node_modules/
+*.log
+.env
+.DS_Store
+grok_usage.jsonl
+event_log.json
+grok_stats.json
+version_counter.json
+term_usage.json
