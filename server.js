@@ -261,6 +261,11 @@ function saveStatesToDisk() {
     }
 }
 
+// Root route: serve index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // REST endpoints to persist and retrieve per-IP state
 app.get('/state', (req, res) => {
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
