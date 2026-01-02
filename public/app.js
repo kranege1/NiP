@@ -265,6 +265,13 @@ socket.on('updatePlayers', (players) => {
     if (Array.isArray(players)) {
         lastPlayers = players;
         cacheColorsFromList(players);
+        // Synchronize own color for header display
+        const myNorm = normalizeName(myPlayerName);
+        const mine = players.find(p => normalizeName((typeof p === 'string') ? p : (p && p.name) || '') === myNorm);
+        if (mine && mine.color) {
+            colorCache.set(myNorm, mine.color);
+        }
+        updateAnsweredHeaderNames();
     }
 });
 
