@@ -534,14 +534,6 @@ socket.on('joinedRoom', ({ isHost: host }) => {
         clearInterval(joinRetryInterval);
         joinRetryInterval = null;
     }
-    if (typeof joinAutoReloadTimeout !== 'undefined' && joinAutoReloadTimeout) {
-        clearTimeout(joinAutoReloadTimeout);
-        joinAutoReloadTimeout = null;
-    }
-    if (typeof joinCountdownInterval !== 'undefined' && joinCountdownInterval) {
-        clearInterval(joinCountdownInterval);
-        joinCountdownInterval = null;
-    }
     const nameEl = document.getElementById('playerName');
     if (nameEl) myPlayerName = nameEl.value.trim();
     updateAnsweredHeaderNames();
