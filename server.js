@@ -1915,7 +1915,7 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
 
     // Spieler sendet seine Wahl
     socket.on('submitVote', (letter) => {
-        if (socket.isHost || !rooms[ACTIVE_ROOM]) return;
+        if (!socket.playerName || !rooms[ACTIVE_ROOM]) return;
         const room = rooms[ACTIVE_ROOM];
         if (!room.votingActive) return;
 
@@ -1966,11 +1966,14 @@ server.listen(PORT, () => {
             }
         }
     }
+    log(`\n========== SERVER START ==========`);
+    log(`VERSION: ${APP_VERSION}`);
     log(`Server läuft – bereit auf Port ${PORT}`);
     if (addresses.length > 0) {
         addresses.forEach(addr => log(`  → http://${addr}:${PORT}`));
     }
     log(`  → http://localhost:${PORT}`);
+    log(`==================================\n`);
     
     // Load term usage tracking and canned answers on startup
     loadTermUsage();
