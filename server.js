@@ -1695,6 +1695,7 @@ io.on('connection', (socket) => {
             room.shuffledAnswers = null;
             room.answersFinalized = false;
             emitWithSeqToRoom(ACTIVE_ROOM, 'roundEnded', {});
+            emitWithSeqToRoom(ACTIVE_ROOM, 'newRoundStarted', {});
             broadcastUpdateSubmitted(ACTIVE_ROOM);
             emitWithSeqToRoom(ACTIVE_ROOM, 'pointsUpdate', room.points || {});
             log(`Neue Runde gestartet`);

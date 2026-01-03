@@ -519,6 +519,16 @@ socket.on('roundEnded', () => {
     votedSoundPlayed = false;
 });
 
+socket.on('newRoundStarted', () => {
+    if (!isHost) {
+        const waitingMsg = document.getElementById('waitingMessage');
+        if (waitingMsg) {
+            waitingMsg.innerHTML = '<strong>🆕 Neue Runde gestartet!</strong><br>Der Admin bereitet die nächste Frage vor... bitte warten.';
+            waitingMsg.style.display = 'block';
+        }
+    }
+});
+
 socket.on('adminReset', () => {
     clearAllTextInputs();
     const answers = document.getElementById('answersList'); 
