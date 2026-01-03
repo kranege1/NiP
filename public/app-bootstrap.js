@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hide admin controls for players
     const adminToggle = document.getElementById('adminPanelToggle');
     if (adminToggle) adminToggle.style.display = 'none';
-    try { if (typeof loadState === 'function') loadState(); } catch (_) {}
+    // Note: loadState() entfernt da es mehrere Spieler von gleicher IP mit gleichem State blockiert
   }
 
   try {

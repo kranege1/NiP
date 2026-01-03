@@ -269,22 +269,23 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// REST endpoints to persist and retrieve per-IP state
+// REST endpoints to persist and retrieve per-session state (not per-IP, da mehrere Spieler von gleicher IP kommen können)
+const sessionStates = {}; // session id -> {playerName, lastAnswer}
+
 app.get('/state', (req, res) => {
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
-    const s = states[ip] || {};
+    const sessionId = req.cookies?.sessionId || req.query?.sessionId || 'unknown';
+    const s = sessionStates[sessionId] || {};
     res.json(s);
 });
 
 app.post('/save-state', (req, res) => {
-    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const sessionId = req.cookies?.sessionId || req.query?.sessionId || 'unknown';
     const { playerName, lastAnswer } = req.body || {};
-    states[ip] = {
+    sessionStates[sessionId] = {
         playerName: playerName || '',
         lastAnswer: lastAnswer || '',
         lastSeen: new Date().toISOString()
     };
-    saveStatesToDisk();
     res.json({ ok: true });
 });
 
