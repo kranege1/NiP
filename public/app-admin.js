@@ -570,6 +570,17 @@ function setupAdminOverlay() {
             qrBtn.textContent = '📱 QR-Code';
             qrBtn.addEventListener('click', showQRCodeOverlay);
             settingsSlot.appendChild(qrBtn);
+            
+            const kickAdminBtn = document.createElement('button');
+            kickAdminBtn.className = 'primary danger';
+            kickAdminBtn.style.cssText = 'width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 500; background-color: #d9534f; display: inline-flex; gap: 8px; align-items: center; justify-content: center;';
+            kickAdminBtn.textContent = '❌ Alten Admin kicken (offline)';
+            kickAdminBtn.addEventListener('click', () => {
+                if (confirm('Alten Admin kicken und die Kontrolle übernehmen?')) {
+                    emitBuffered('kickOfflineAdmin', {});
+                }
+            });
+            settingsSlot.appendChild(kickAdminBtn);
         }
         
         if (voiceSlot && voiceControls) {

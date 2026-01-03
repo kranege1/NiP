@@ -968,16 +968,23 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
                 points: {},
                 pointsCommitted: false,
                 shuffledAnswers: null,
-                answersFinalized: false
+                answersFinalized: false,
+                adminHealthCheck: null
             };
             log(`Admin hat Spiel 1 geöffnet`);
         } else {
-            // Remove the old admin from players list if there was one
+            // Remove the old admin - sofort, denn neuer Admin übernimmt
             const oldHostId = rooms[ACTIVE_ROOM].host;
             if (oldHostId && rooms[ACTIVE_ROOM].players[oldHostId]) {
                 delete rooms[ACTIVE_ROOM].players[oldHostId];
                 log(`Alter Admin ${oldHostId} aus Spielerliste entfernt`);
             }
+            // Stoppe old health check wenn vorhanden
+            if (rooms[ACTIVE_ROOM].adminHealthCheck) {
+                clearTimeout(rooms[ACTIVE_ROOM].adminHealthCheck);
+                log(`Alter Admin Health-Check abgebrochen`);
+            }
+        }
             rooms[ACTIVE_ROOM].host = socket.id;
             rooms[ACTIVE_ROOM].votes = rooms[ACTIVE_ROOM].votes || {};
             rooms[ACTIVE_ROOM].points = rooms[ACTIVE_ROOM].points || {};
@@ -989,7 +996,26 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
         socket.roomCode = ACTIVE_ROOM;
         socket.playerName = 'Admin';
         socket.isHost = true;
+        socket.adminPingPending = false;
         socket.emit('adminJoined');
+        
+        // Starte Health-Check: Wenn Admin nicht antwortet nach 30 Sekunden, ist er offline
+        const startAdminHealthCheck = () => {
+            if (!rooms[ACTIVE_ROOM] || rooms[ACTIVE_ROOM].host !== socket.id) return;
+            socket.adminPingPending = true;
+            socket.emit('adminPing');
+            
+            rooms[ACTIVE_ROOM].adminHealthCheck = setTimeout(() => {
+                if (socket.adminPingPending && rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].host === socket.id) {
+                    log(`[ADMIN-HEALTH] Admin ${socket.id} antwortet nicht - als offline gekennzeichnet`);
+                    socket.adminOffline = true;
+                    // Neuer Admin kann sich einloggen
+                }
+            }, 30000); // 30 Sekunden Timeout
+        };
+        
+        // Starte Health-Check nach 20 Sekunden
+        setTimeout(startAdminHealthCheck, 20000);
 
         // Always send a fresh snapshot so new admin tabs (even with high lastSeenSeq from shared localStorage) see current state
         try {
@@ -1020,6 +1046,39 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
         try { emitPlayerLists(ACTIVE_ROOM); } catch (_) {}
 
         replayEvents(socket, ACTIVE_ROOM, lastSeenSeq);
+    });
+    
+    // Admin antwortet auf Ping (Health-Check)
+    socket.on('adminPong', () => {
+        socket.adminPingPending = false;
+        if (rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].adminHealthCheck) {
+            clearTimeout(rooms[ACTIVE_ROOM].adminHealthCheck);
+            log(`[ADMIN-HEALTH] Admin ${socket.id} hat geantwortet - Health-Check OK`);
+            // Restart health check
+            setTimeout(() => {
+                if (socket.connected && rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].host === socket.id) {
+                    socket.adminPingPending = true;
+                    socket.emit('adminPing');
+                    rooms[ACTIVE_ROOM].adminHealthCheck = setTimeout(() => {
+                        if (socket.adminPingPending && rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].host === socket.id) {
+                            log(`[ADMIN-HEALTH] Admin ${socket.id} antwortet nicht - als offline gekennzeichnet`);
+                            socket.adminOffline = true;
+                        }
+                    }, 30000);
+                }
+            }, 20000);
+        }
+    });
+    
+    // Neuer Admin kann alten Admin kicken wenn dieser offline ist
+    socket.on('kickOfflineAdmin', () => {
+        if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
+        
+        const oldHostId = rooms[ACTIVE_ROOM].host;
+        if (oldHostId && oldHostId !== socket.id) {
+            log(`[ADMIN-KICK] Admin ${socket.id} kickt unerreichbaren Admin ${oldHostId}`);
+            io.to(oldHostId).emit('adminKicked', { reason: 'Neuer Admin hat Kontrolle übernommen' });
+        }
     });
 
     // Spieler verbindet sich

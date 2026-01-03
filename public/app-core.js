@@ -363,10 +363,21 @@ socket.on('ping', () => {
     }
     connectionTimeout = setTimeout(() => {
         if (statusEl) {
-            statusEl.innerHTML = '❌ Getrennt';
+            statusEl.innerHTML = '❌ Offline';
             statusEl.style.color = 'red';
         }
-    }, 12000);
+    }, 10000);
+});
+
+// Admin-spezifischer Ping (Health-Check)
+socket.on('adminPing', () => {
+    socket.emit('adminPong');
+});
+
+// Admin wurde von neuem Admin gekickt
+socket.on('adminKicked', (data) => {
+    alert(`Admin-Sitzung beendet: ${data.reason || 'Ein neuer Admin hat die Kontrolle übernommen'}`);
+    window.location.reload();
 });
 
 socket.on('disconnect', () => {
