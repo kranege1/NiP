@@ -3010,11 +3010,6 @@ const mainTerms = [
         "area": "Musik & Entertainment"
     },
     {
-        "term": "Welcher Sänger starb 2016 und war bekannt als Prince?",
-        "definition": "Prince",
-        "area": "Musik & Entertainment"
-    },
-    {
         "term": "Was war 1991 der Hit von Nirvana?",
         "definition": "Smells Like Teen Spirit",
         "area": "Musik & Entertainment"

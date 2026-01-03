@@ -743,22 +743,131 @@ io.on('connection', (socket) => {
         function scheduleBotAnswers(roomCode) {
             const room = rooms[roomCode];
             if (!room) return;
-            for (const [id, p] of Object.entries(room.players)) {
-                if (!p || !p.isBot) continue;
-                if ((room.submitted || []).includes(p.name)) continue;
-                const delay = 800 + Math.floor(Math.random() * 6000);
-                setTimeout(async () => {
-                    const q = room.currentQuestion || '';
-                    const area = (room.currentQuestionArea || '').toLowerCase();
-                    const isActivity = area.includes('activity');
-                    const isSprachen = area.includes('sprachen');
-                    const isRateStadt = area.includes('rate die stadt');
-                    const isRateLand = area.includes('rate das land');
-                    const useCannedByArea = isActivity || isSprachen || isRateStadt || isRateLand;
-                    let answerText = ``;
-                    let fromCanned = false;
+            
+            // Find all bots that need answers
+            const botsNeedingAnswers = Object.entries(room.players || {})
+                .filter(([id, p]) => p && p.isBot && !(room.submitted || []).includes(p.name))
+                .map(([id, p]) => ({ id, player: p }));
+            
+            if (botsNeedingAnswers.length === 0) return;
+            
+            const q = room.currentQuestion || '';
+            const area = (room.currentQuestionArea || '').toLowerCase();
+            const isActivity = area.includes('activity');
+            const isSprachen = area.includes('sprachen');
+            const isRateStadt = area.includes('rate die stadt');
+            const isRateLand = area.includes('rate das land');
+            const useCannedByArea = isActivity || isSprachen || isRateStadt || isRateLand;
+            
+            // Generate all bot answers at once (batch processing)
+            const baseDelay = 800 + Math.floor(Math.random() * 6000);
+            
+            setTimeout(async () => {
+                const botAnswers = {}; // map bot ID → answer
+                
+                // First: try to generate multiple different answers via Grok if enabled
+                if (!useCannedByArea && botsNeedingAnswers.length > 0) {
+                    try {
+                        const firstBot = botsNeedingAnswers[0].player;
+                        const grokAllowed = !!firstBot.grokEnabled && grok.isConfigured();
+                        
+                        if (grokAllowed) {
+                            const numBots = botsNeedingAnswers.length;
+                            const correctAnswer = (room.realAnswer || '').trim();
+                            
+                            let prompt = '';
+                            const answerFormat = `Gib mir ${numBots} KOMPLETT VERSCHIEDENE falsche Antworten (nummeriert 1-${numBots}, jede auf neuer Zeile):`;
+                            
+                            if (correctAnswer) {
+                                prompt = `Die Frage ist: "${q}"
+Die RICHTIGE Antwort ist: "${correctAnswer}"
 
-                    // Activity/SPRACHEN/RATE DIE STADT/RATE DAS LAND mode: bots pull from answers.js area-specific pool; fallback to one-word list
+${answerFormat}
+- Jede Antwort KOMPLETT ANDERS (verschiedene Stile, Längen, Ansätze!)
+- Jede muss zur gleichen Kategorie wie die richtige Antwort gehören
+- NICHT die richtige Antwort
+- Plausibel und glaubwürdig
+- Sachlich (Lexikon-Stil)
+- 3-10 Wörter
+- Keine Anführungszeichen
+- Keine Meta-Hinweise
+
+Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
+                            } else {
+                                const unrelatedTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme', 'Kochen', 'Handwerk', 'Kosmetik'];
+                                const topic = unrelatedTopics[Math.floor(Math.random() * unrelatedTopics.length)];
+                                prompt = `Die Frage ist: "${q}"
+
+${answerFormat}
+- Jede Antwort KOMPLETT ANDERS (verschiedene Stile, Längen, Ansätze!)
+- Alle aus dem Themenbereich "${topic}"
+- FALSCH formuliert
+- 3-10 Wörter
+- Keine Meta-Hinweise
+
+Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
+                            }
+                            
+                            // Increased temperature for more diversity
+                            const temp = 1.0 + Math.random() * 0.5; // 1.0 - 1.5 (higher for creativity)
+                            const maxTokens = 400;
+                            
+                            console.log(`[BOT-BATCH] Requesting ${numBots} diverse answers for "${q}"`);
+                            const res = await grok.generateResponse(prompt, undefined, temp, maxTokens);
+                            
+                            if (res && res.success && res.response) {
+                                const responseText = res.response.trim();
+                                console.log(`[BOT-BATCH] Grok response:\n${responseText}`);
+                                
+                                // Parse numbered answers (1. answer 2. answer 3. answer)
+                                const answerLines = responseText.split('\n').map(line => line.trim()).filter(l => l);
+                                const parsedAnswers = [];
+                                
+                                for (const line of answerLines) {
+                                    // Match: "1. something" or "1) something"
+                                    const match = line.match(/^[\d]+[\.\)]\s*(.+)$/);
+                                    if (match) {
+                                        parsedAnswers.push(match[1].trim());
+                                    } else if (line && !line.match(/^[\d]+[\.\)]/)) {
+                                        // Line without number - treat as continuation or standalone
+                                        parsedAnswers.push(line);
+                                    }
+                                }
+                                
+                                console.log(`[BOT-BATCH] Parsed ${parsedAnswers.length} answers:`, parsedAnswers);
+                                
+                                // Assign parsed answers to bots
+                                for (let i = 0; i < botsNeedingAnswers.length; i++) {
+                                    const botId = botsNeedingAnswers[i].id;
+                                    botAnswers[botId] = parsedAnswers[i % parsedAnswers.length] || parsedAnswers[0] || '';
+                                }
+                                
+                                // Log Grok usage for batch
+                                try {
+                                    appendGrokUsageLog(`[Batch-${numBots}Bots]`, res.tokensUsed, prompt, res.promptTokens, res.completionTokens);
+                                } catch (e) { /* ignore */ }
+                                
+                                // Notify admin
+                                try {
+                                    if (room.host) {
+                                        const hostSocket = io.sockets.sockets.get(room.host);
+                                        if (hostSocket) hostSocket.emit('grokUsageNotification', { playerName: `[Batch: ${numBots} diverse Antworten]` });
+                                    }
+                                } catch (e) { /* ignore */ }
+                            }
+                        }
+                    } catch (e) {
+                        console.error('[BOT-BATCH] Grok error:', e);
+                    }
+                }
+                
+                // Second: fill any remaining slots with canned answers or fallbacks
+                for (const { id, player: p } of botsNeedingAnswers) {
+                    if (botAnswers[id]) continue; // Already have from Grok batch
+                    
+                    let answerText = '';
+                    
+                    // Activity/SPRACHEN/etc: use canned pool
                     if (useCannedByArea) {
                         try {
                             let areaKey = 'ACTIVITY';
@@ -766,107 +875,18 @@ io.on('connection', (socket) => {
                             else if (isRateStadt) areaKey = 'RATE DIE STADT';
                             else if (isRateLand) areaKey = 'RATE DAS LAND';
                             
-                            console.log(`[DEBUG] Bot answer - area: "${room.currentQuestionArea}", areaKey: "${areaKey}", pool size: ${CANNED_ANSWERS_BY_AREA[areaKey]?.length || 0}`);
                             const byArea = CANNED_ANSWERS_BY_AREA && CANNED_ANSWERS_BY_AREA[areaKey];
                             if (byArea && byArea.length) {
                                 answerText = byArea[Math.floor(Math.random() * byArea.length)] || '';
-                                fromCanned = true;
                             }
                         } catch (e) { /* ignore */ }
+                        
                         if (!answerText) {
                             const oneWordPool = ['Schwimmen','Kochlöffel','Laterne','Seil','Puzzle','Pinsel','Trommel','Segel','Kreide','Fahrrad','Kaktus','Kompass','Pfeffer','Rakete','Kiste','Mütze','Karotte','Lampe','Hobel','Ziegel'];
                             answerText = oneWordPool[Math.floor(Math.random() * oneWordPool.length)] || 'Schwimmen';
                         }
                     } else {
-                    try {
-                        const grokAllowed = !!p.grokEnabled && grok.isConfigured();
-                        if (grokAllowed) {
-                            // Count remaining bots for batch generation hint
-                            const remainingBots = Object.values(room.players || {})
-                                .filter(bot => bot && bot.isBot && !(room.submitted || []).includes(bot.name))
-                                .length;
-                            
-                            // Vary prompt per bot to increase diversity: include bot name, question
-                            const personas = [
-                                'kreativ',
-                                'sachlich',
-                                'humorvoll',
-                                'poetisch',
-                                'technisch',
-                                'kurz und prägnant'
-                            ];
-                            const persona = personas[Math.floor(Math.random() * personas.length)];
-
-                            // Build smarter prompt with correct answer context
-                            let prompt = '';
-                            const correctAnswer = (room.realAnswer || '').trim();
-                            
-                            // Request multiple different answers if there are multiple bots
-                            const numAnswers = Math.max(1, remainingBots);
-                            const answerFormat = numAnswers > 1 ? `Gib mir ${numAnswers} verschiedene falsche Antworten (jede auf einer neuen Zeile, nummeriert 1-${numAnswers}):` : `Erfinde EINE falsche Antwort:`;
-                            
-                            if (correctAnswer) {
-                                // Intelligente Antwort: Wenn wir die richtige Antwort haben, generiere plausible FALSCHE Antworten derselben Kategorie
-                                prompt = `Die Frage ist: "${q}"
-Die RICHTIGE Antwort ist: "${correctAnswer}"
-
-${answerFormat}
-- Jede Antwort muss zur gleichen Kategorie oder Art wie die richtige Antwort gehören (z.B. wenn Antwort ein Designer ist → andere Designer; wenn Land → anderes Land)
-- NICHT die richtige Antwort
-- Plausibel und glaubwürdig
-- Neutral und sachlich (wie ein Lexikon)
-- 3-10 Wörter
-- Keine Meta-Hinweise oder Anführungszeichen
-- ALLE unterschiedlich voneinander
-
-Antworte direkt ohne Anmerkungen.`;
-                            } else {
-                                // Fallback: alte Methode wenn keine richtige Antwort gespeichert
-                                const unrelatedTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme', 'Kochen', 'Handwerk', 'Kosmetik'];
-                                let topic = unrelatedTopics[Math.floor(Math.random() * unrelatedTopics.length)];
-                                prompt = `Die Frage ist: "${q}"
-
-${answerFormat}
-- Jede Antwort aus dem Themenbereich "${topic}"
-- FALSCH und sachlich formuliert
-- 3-10 Wörter
-- Keine Meta-Hinweise
-- ALLE unterschiedlich voneinander
-
-Antworte direkt ohne Anmerkungen.`;
-                            }
-
-                            // randomize temperature a bit for sampling diversity
-                            const temp = 0.75 + Math.random() * 0.6; // ~0.75 - 1.35
-                            const maxTokens = numAnswers > 1 ? 300 : 140;
-                            const res = await grok.generateResponse(prompt, undefined, temp, maxTokens);
-                            if (res && res.success && res.response) {
-                                answerText = res.response.trim();
-                                // Persist Grok usage for bot generation
-                                try { appendGrokUsageLog(p.name, res.tokensUsed, prompt, res.promptTokens, res.completionTokens); } catch (e) { /* ignore */ }
-                                // Notify admin about bot Grok usage
-                                try {
-                                    if (room.host) {
-                                        const hostSocket = io.sockets.sockets.get(room.host);
-                                        if (hostSocket) hostSocket.emit('grokUsageNotification', { playerName: numAnswers > 1 ? `[Batch: ${numAnswers} Bots]` : p.name });
-                                    }
-                                } catch (e) { /* ignore */ }
-                            }
-                        } else {
-                            // Use canned answers when Grok is disabled for this bot
-                            const pool = _loadCannedAnswers();
-                            if (pool && pool.length) {
-                                answerText = pool[Math.floor(Math.random() * pool.length)] || '';
-                                fromCanned = true;
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Bot Grok error', e);
-                    }
-                    }
-                    if (!answerText) {
-                        // fallback templates with slight randomization
-                        // fallback templates choose an unrelated topic to keep answers fachfremd
+                        // Fallback templates
                         const fallbackTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme'];
                         const fbTopic = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
                         const fallbacksNoQ = [
@@ -881,60 +901,28 @@ Antworte direkt ohne Anmerkungen.`;
                             `Eine knappe, irreführende Definition zu ${q} (aus ${fbTopic}).`,
                             `Kurz: eine scheinbar logische Erklärung für ${q} im Bereich ${fbTopic}.`
                         ];
-
-                        answerText = (allowTerm ? fallbacksWithQ : fallbacksNoQ)[Math.floor(Math.random() * (allowTerm ? fallbacksWithQ.length : fallbacksNoQ.length))];
-                        if (answerText.length > 200) answerText = answerText.substr(0,200);
+                        
+                        answerText = fallbacksWithQ[Math.floor(Math.random() * fallbacksWithQ.length)];
+                        if (answerText.length > 200) answerText = answerText.substr(0, 200);
                     }
-
-                    // Ensure answer does not contain the exact question term unless activity/sprachen area allows it
-                    if (!useCannedByArea && q && typeof answerText === 'string') {
-                        try {
-                            const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            const re = new RegExp('\\b' + escapeRegExp(q) + '\\b', 'gi');
-                            if (re.test(answerText)) {
-                                // replace occurrences with a neutral phrase
-                                answerText = answerText.replace(re, 'der Begriff');
-                                // trim repeated spaces
-                                answerText = answerText.replace(/\s+/g, ' ').trim();
-                            }
-                        } catch (e) {
-                            // ignore sanitization errors
-                        }
-
-                        // Avoid answers beginning with "der Begriff" (or similar).
-                        try {
-                            const leadingRe = /^\s*(der|die|das)\s+begriff\b[\s,:-]*/i;
-                            if (leadingRe.test(answerText)) {
-                                const starters = ['Eine Beschreibung', 'Kurz gesagt', 'In kurzen Worten', 'Als Begriff beschrieben'];
-                                const starter = starters[Math.floor(Math.random() * starters.length)];
-                                answerText = answerText.replace(leadingRe, starter + ' ');
-                                answerText = answerText.replace(/\s+/g, ' ').trim();
-                            }
-                        } catch (e) {
-                            // ignore
-                        }
-                        // Enforce 3-10 words for Grok answers; allow canned answers fully
-                        try {
-                            const words = answerText.split(/\s+/).filter(Boolean);
-                            if (!fromCanned && words.length > 10) {
-                                answerText = words.slice(0, 10).join(' ').trim();
-                            } else if (words.length < 3) {
-                                // choose a fallback matching the allowTerm rule to guarantee length
-                                const fallbackTopics = ['Küche','Sport','Musik','Garten','Reisen'];
-                                const fb = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
-                                const shortFallback = allowTerm ? `Kurze falsche Definition aus ${fb}.` : `Kurze falsche Definition.`;
-                                answerText = shortFallback;
-                            }
-                            // ensure terminal punctuation
-                            if (!/[.!?]$/.test(answerText)) answerText += '.';
-                        } catch (e) {
-                            // ignore
-                        }
-                    }
-                    serverBotSubmit(roomCode, id, answerText);
-                }, delay);
-            }
+                    
+                    botAnswers[id] = answerText;
+                }
+                
+                // Third: submit all bot answers with appropriate delays
+                let submitDelay = 0;
+                for (const { id, player: p } of botsNeedingAnswers) {
+                    const answer = botAnswers[id];
+                    if (!answer) continue;
+                    
+                    submitDelay += 100 + Math.floor(Math.random() * 200);
+                    setTimeout(() => {
+                        serverBotSubmit(roomCode, id, answer);
+                    }, submitDelay);
+                }
+            }, baseDelay);
         }
+
 
         function scheduleBotVotes(roomCode) {
             const room = rooms[roomCode];
