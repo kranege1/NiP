@@ -346,10 +346,11 @@ function drawAreaPie(canvas, entries, total) {
 }
 
 function showQRCodeOverlay() {
-    // Create overlay if it doesn't exist
+    // Check if overlay already exists
     let overlay = document.getElementById('qrCodeOverlay');
     
     if (!overlay) {
+        // Create overlay
         overlay = document.createElement('div');
         overlay.id = 'qrCodeOverlay';
         overlay.className = 'chart-overlay';
@@ -360,7 +361,7 @@ function showQRCodeOverlay() {
         
         const box = document.createElement('div');
         box.className = 'chart-overlay-box';
-        box.style.maxWidth = '500px';
+        box.style.maxWidth = '600px';
         
         const header = document.createElement('div');
         header.className = 'chart-overlay-header';
@@ -376,16 +377,25 @@ function showQRCodeOverlay() {
         const body = document.createElement('div');
         body.className = 'chart-overlay-body';
         body.style.textAlign = 'center';
-        body.style.padding = '30px';
+        body.style.padding = '40px';
         
-        const iframe = document.createElement('iframe');
-        iframe.src = 'URL-QR.html';
-        iframe.style.width = '100%';
-        iframe.style.height = '500px';
-        iframe.style.border = 'none';
-        iframe.style.borderRadius = '8px';
+        const qrImage = document.createElement('img');
+        qrImage.src = 'qr-code.png';
+        qrImage.alt = 'QR-Code zum Beitreten';
+        qrImage.style.maxWidth = '100%';
+        qrImage.style.height = 'auto';
+        qrImage.style.borderRadius = '12px';
+        qrImage.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
         
-        body.appendChild(iframe);
+        const instruction = document.createElement('p');
+        instruction.textContent = 'Scanne diesen Code mit deinem Handy, um dem Spiel beizutreten';
+        instruction.style.marginTop = '24px';
+        instruction.style.color = '#aaa';
+        instruction.style.fontSize = '15px';
+        instruction.style.lineHeight = '1.5';
+        
+        body.appendChild(qrImage);
+        body.appendChild(instruction);
         
         box.appendChild(body);
         overlay.appendChild(box);
@@ -557,7 +567,7 @@ function setupAdminOverlay() {
             const qrBtn = document.createElement('button');
             qrBtn.className = 'primary';
             qrBtn.style.cssText = 'width: 100%; padding: 12px 16px; font-size: 14px; font-weight: 500; display: inline-flex; gap: 8px; align-items: center; justify-content: center;';
-            qrBtn.textContent = '📱 QR-Code anzeigen';
+            qrBtn.textContent = '📱 QR-Code';
             qrBtn.addEventListener('click', showQRCodeOverlay);
             settingsSlot.appendChild(qrBtn);
         }
