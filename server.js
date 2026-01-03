@@ -996,12 +996,18 @@ io.on('connection', (socket) => {
 
     // Spieler verbindet sich
     socket.on('playerJoin', ({ playerName, lastSeenSeq }) => {
+        log(`[SERVER-JOIN] 01_EVENT_RECEIVED - playerName: ${playerName}, lastSeenSeq: ${lastSeenSeq}, socketId: ${socket.id}`);
+        
         if (!playerName.trim()) {
+            log(`[SERVER-JOIN] 02_ERROR - Empty name`);
             socket.emit('error', 'Bitte einen Namen eingeben!');
             return;
         }
+        log(`[SERVER-JOIN] 03_NAME_VALID - ${playerName}`);
+        
         // Auto-create room if admin not yet connected, so players can queue up
         if (!rooms[ACTIVE_ROOM]) {
+            log(`[SERVER-JOIN] 04_CREATING_AUTO_ROOM`);
             rooms[ACTIVE_ROOM] = {
                 host: null,
                 players: {},
@@ -1017,7 +1023,9 @@ io.on('connection', (socket) => {
                 shuffledAnswers: null,
                 answersFinalized: false
             };
-            log(`[AUTO-ROOM] Erstellt, Spieler wartet auf Admin: ${playerName}`);
+            log(`[SERVER-JOIN] 05_AUTO_ROOM_CREATED`);
+        } else {
+            log(`[SERVER-JOIN] 04_ROOM_EXISTS - players: ${Object.keys(rooms[ACTIVE_ROOM].players).length}`);
         }
         
         // Prüfe ob dieser Spieler bereits existiert (Reconnect)
@@ -1026,6 +1034,7 @@ io.on('connection', (socket) => {
         let preservedColor = null;
         if (existingPlayer) {
             const [oldId, playerData] = existingPlayer;
+            log(`[SERVER-JOIN] 06_RECONNECT_DETECTED - oldSocketId: ${oldId}, grokEnabled: ${playerData.grokEnabled}`);
             // Preserve grokEnabled flag before deleting
             preservedGrokEnabled = !!playerData.grokEnabled;
             preservedColor = playerData.color || null;
@@ -1034,66 +1043,102 @@ io.on('connection', (socket) => {
             // Cleare timeout falls vorhanden
             if (playerData.disconnectTimeout) {
                 clearTimeout(playerData.disconnectTimeout);
+                log(`[SERVER-JOIN] 07_CLEARED_DISCONNECT_TIMEOUT`);
             }
-            log(`${playerName} hat sich wieder verbunden (war offline), grokEnabled=${preservedGrokEnabled}`);
+        } else {
+            log(`[SERVER-JOIN] 06_NEW_PLAYER`);
         }
 
+        log(`[SERVER-JOIN] 08_CALLING_JOIN_ROOM`);
         joinRoom(socket, ACTIVE_ROOM, playerName.trim(), false, preservedGrokEnabled, preservedColor);
-        log(`${playerName} beigetreten`);
+        log(`[SERVER-JOIN] 09_JOIN_ROOM_RETURNED`);
+        
+        log(`[SERVER-JOIN] 10_CALLING_REPLAY_EVENTS`);
         replayEvents(socket, ACTIVE_ROOM, Number(lastSeenSeq) || 0);
+        log(`[SERVER-JOIN] 11_REPLAY_EVENTS_DONE`);
     });
 
     function joinRoom(socket, roomCode, playerName, isHost, preservedGrokEnabled = false, preservedColor = null) {
+        log(`[JOIN-ROOM] 01_START - playerName: ${playerName}, socketId: ${socket.id}`);
         socket.join(roomCode);
+        log(`[JOIN-ROOM] 02_SOCKET_JOINED_ROOM - roomCode: ${roomCode}`);
+        
         socket.roomCode = roomCode;
         socket.playerName = playerName;
         socket.isHost = isHost;
+        log(`[JOIN-ROOM] 03_SOCKET_PROPERTIES_SET`);
 
         // determine remote IP (handle IPv4-mapped IPv6)
         let ip = socket.handshake && (socket.handshake.address || socket.handshake.headers && socket.handshake.headers['x-forwarded-for']) || socket.request && socket.request.connection && socket.request.connection.remoteAddress || socket.conn && socket.conn.remoteAddress || 'unknown';
         if (typeof ip === 'string' && ip.startsWith('::ffff:')) ip = ip.split('::ffff:').pop();
+        log(`[JOIN-ROOM] 04_IP_DETERMINED - ip: ${ip}`);
 
         // Vor dem Hinzufügen prüfen, ob Platz ist. Falls nicht, Bots entfernen
         let allPlayers = Object.values(rooms[roomCode].players || {});
         let botIds = Object.entries(rooms[roomCode].players || {}).filter(([id, p]) => p && p.isBot).map(([id]) => id);
+        log(`[JOIN-ROOM] 05_PLAYER_COUNT_CHECK - current: ${allPlayers.length}, max: ${MAX_PLAYERS}`);
+        
         while (allPlayers.length >= MAX_PLAYERS && botIds.length > 0) {
             // Entferne einen Bot, um Platz zu schaffen
             const removeId = botIds.pop();
             delete rooms[roomCode].players[removeId];
             allPlayers = Object.values(rooms[roomCode].players || {});
             botIds = Object.entries(rooms[roomCode].players || {}).filter(([id, p]) => p && p.isBot).map(([id]) => id);
+            log(`[JOIN-ROOM] 06_BOT_REMOVED - remaining: ${allPlayers.length}`);
         }
         // Wenn immer noch zu viele Spieler, Abbruch
         if (allPlayers.length >= MAX_PLAYERS) {
+            log(`[JOIN-ROOM] 07_ROOM_FULL_ERROR - count: ${allPlayers.length}`);
             socket.emit('roomFull', { max: MAX_PLAYERS });
             return;
         }
         // Assign first free color in palette order; preserve previous color if rejoining
         const assignedColor = pickUniqueColor(rooms[roomCode], playerName, preservedColor);
+        log(`[JOIN-ROOM] 08_COLOR_ASSIGNED - color: ${assignedColor}`);
+        
         rooms[roomCode].players[socket.id] = { name: playerName, ip, offline: false, disconnectTimeout: null, grokEnabled: preservedGrokEnabled, color: assignedColor };
+        log(`[JOIN-ROOM] 09_PLAYER_ADDED_TO_ROOM`);
+        
         if (!rooms[roomCode].points) rooms[roomCode].points = {};
         if (!rooms[roomCode].votes) rooms[roomCode].votes = {};
         if (typeof rooms[roomCode].pointsCommitted !== 'boolean') rooms[roomCode].pointsCommitted = false;
+        log(`[JOIN-ROOM] 10_ROOM_STRUCTURES_INITIALIZED`);
 
         // emit joinedRoom FIRST so client knows it's in the room
+        log(`[JOIN-ROOM] 11_EMITTING_JOINED_ROOM`);
         socket.emit('joinedRoom', { isHost });
+        log(`[JOIN-ROOM] 12_JOINED_ROOM_EMITTED`);
 
         // Then broadcast updated player lists to all clients in the room (including the newly joined one)
         // Use setImmediate to ensure the client receives joinedRoom before player list updates
+        log(`[JOIN-ROOM] 13_QUEUING_SETIMMEDIATE_BROADCASTS`);
         setImmediate(() => {
+            log(`[JOIN-ROOM] 14_SETIMMEDIATE_FIRING - emitPlayerLists`);
             emitPlayerLists(roomCode);
+            log(`[JOIN-ROOM] 15_EMITTED_PLAYER_LISTS`);
+            
+            log(`[JOIN-ROOM] 16_BROADCAST_UPDATE_SUBMITTED`);
             broadcastUpdateSubmitted(roomCode);
+            log(`[JOIN-ROOM] 17_DONE_UPDATE_SUBMITTED`);
+            
+            log(`[JOIN-ROOM] 18_EMIT_POINTS_UPDATE`);
             emitWithSeqToRoom(roomCode, 'pointsUpdate', rooms[roomCode].points || {});
+            log(`[JOIN-ROOM] 19_DONE_POINTS_UPDATE`);
         });
 
         // Send Grok permission status to the player
         if (!isHost && rooms[roomCode].players[socket.id]) {
+            log(`[JOIN-ROOM] 20_EMITTING_GROK_PERMISSION`);
             socket.emit('grokPermissionUpdate', { grokEnabled: !!rooms[roomCode].players[socket.id].grokEnabled });
+            log(`[JOIN-ROOM] 21_GROK_PERMISSION_EMITTED`);
         }
 
         if (rooms[roomCode].currentQuestion) {
+            log(`[JOIN-ROOM] 22_SENDING_CURRENT_QUESTION`);
             socket.emit('questionSent', rooms[roomCode].currentQuestion);
+            log(`[JOIN-ROOM] 23_QUESTION_SENT`);
         }
+        log(`[JOIN-ROOM] 24_COMPLETE`);
     }
 
     // helper: emit only to connected screen clients in a room

@@ -535,26 +535,35 @@ socket.on('adminJoined', () => {
 });
 
 socket.on('joinedRoom', ({ isHost: host }) => {
-    isHost = host;
+    console.log('[JOIN] 14_JOINED_ROOM_EVENT_RECEIVED - isHost:', host);\n    isHost = host;
+    console.log('[JOIN] 15_IS_HOST_SET:', isHost);
     joined = true;
+    console.log('[JOIN] 16_JOINED_FLAG_SET_TRUE');
     // Clear kick flag on successful join
     sessionStorage.removeItem('wasKicked');
+    console.log('[JOIN] 17_KICK_FLAG_CLEARED');
     if (typeof joinRetryInterval !== 'undefined' && joinRetryInterval) {
         clearInterval(joinRetryInterval);
         joinRetryInterval = null;
+        console.log('[JOIN] 18_RETRY_INTERVAL_CLEARED');
     }
     const nameEl = document.getElementById('playerName');
     if (nameEl) myPlayerName = nameEl.value.trim();
+    console.log('[JOIN] 19_MY_PLAYER_NAME_SET:', myPlayerName);
     updateAnsweredHeaderNames();
+    console.log('[JOIN] 20_ANSWERED_HEADER_UPDATED');
     if (!isHost) {
         document.getElementById('playerSetup').style.display = 'none';
         document.getElementById('playerGame').style.display = 'block';
+        console.log('[JOIN] 21_UI_SWITCHED_TO_GAME');
         const waitMsg = document.getElementById('waitingMessage');
         if (waitMsg) {
             waitMsg.style.display = 'block';
             waitMsg.textContent = 'Warte auf die Frage vom Admin...';
+            console.log('[JOIN] 22_WAITING_MESSAGE_UPDATED');
         }
         document.getElementById('answerSection').style.display = 'none';
+        console.log('[JOIN] 23_JOIN_COMPLETE_SUCCESS');
     }
 });
 

@@ -4,22 +4,28 @@ let joinRetryInterval = null; // re-emit join until acknowledged
 
 function joinGame() {
     const name = document.getElementById('playerName').value.trim();
+    console.log('[JOIN] 01_BUTTON_CLICK - Name from input:', name);
     if (!name) return alert('Name eingeben!');
     myPlayerName = name;
+    console.log('[JOIN] 02_NAME_SET - myPlayerName:', myPlayerName);
     
     // Clear kick flag on manual join attempt
     sessionStorage.removeItem('wasKicked');
+    console.log('[JOIN] 03_KICK_FLAG_CLEARED');
     
-    console.log('[JOIN] Starting join process for:', name);
+    console.log('[JOIN] 04_SOCKET_STATE - socket:', {connected: socket?.connected, id: socket?.id});
 
     // helper to emit join with throttling reset
     const emitJoin = () => {
+        console.log('[JOIN] 05a_EMIT_JOIN_HELPER_CALLED');
         if (typeof lastAutoAttempt !== 'undefined') lastAutoAttempt = 0; // allow immediate retry
         try {
-            socket.emit('playerJoin', { playerName: name, lastSeenSeq: lastSeq });
-            console.log('[JOIN] Emitted playerJoin');
+            const payload = { playerName: name, lastSeenSeq: lastSeq };
+            console.log('[JOIN] 05b_ABOUT_TO_EMIT - payload:', payload, 'socket.connected:', socket?.connected);
+            socket.emit('playerJoin', payload);
+            console.log('[JOIN] 05c_EMIT_COMPLETE - playerJoin sent');
         } catch (e) {
-            console.warn('join emit failed', e);
+            console.error('[JOIN] 05d_EMIT_ERROR:', e);
         }
     };
 
@@ -29,33 +35,48 @@ function joinGame() {
         const game = document.getElementById('playerGame');
         const waiting = document.getElementById('waitingMessage');
         
-        console.log('[JOIN] UI elements:', {setup: !!setup, game: !!game, waiting: !!waiting});
+        console.log('[JOIN] 06_UI_ELEMENTS_CHECK:', {setup: !!setup, game: !!game, waiting: !!waiting});
         
-        if (setup) setup.style.display = 'none';
-        if (game) game.style.display = 'block';
+        if (setup) {
+            setup.style.display = 'none';
+            console.log('[JOIN] 07a_SETUP_HIDDEN');
+        }
+        if (game) {
+            game.style.display = 'block';
+            console.log('[JOIN] 07b_GAME_SHOWN');
+        }
         if (waiting) {
             waiting.style.display = 'block';
             waiting.innerHTML = '<strong>🔍 Verbinde mit Server...</strong>';
-            console.log('[JOIN] Set waiting message');
+            console.log('[JOIN] 07c_WAITING_MESSAGE_SET');
         }
         const answerSection = document.getElementById('answerSection');
-        if (answerSection) answerSection.style.display = 'none';
+        if (answerSection) {
+            answerSection.style.display = 'none';
+            console.log('[JOIN] 07d_ANSWER_SECTION_HIDDEN');
+        }
     } catch (e) {
-        console.error('[JOIN] UI switch failed:', e);
+        console.error('[JOIN] 07e_UI_SWITCH_ERROR:', e);
     }
 
     // Emit join request
+    console.log('[JOIN] 08_BEFORE_FIRST_EMIT');
     emitJoin();
+    console.log('[JOIN] 09_AFTER_FIRST_EMIT');
 
-    if (joinRetryInterval) clearInterval(joinRetryInterval);
+    if (joinRetryInterval) {
+        clearInterval(joinRetryInterval);
+        console.log('[JOIN] 10_CLEARED_OLD_RETRY_INTERVAL');
+    }
     joinRetryInterval = setInterval(() => {
+        console.log('[JOIN] 11_RETRY_CHECK - joined:', joined, 'timestamp:', new Date().toISOString());
         if (typeof joined !== 'undefined' && joined) {
-            console.log('[JOIN] Join confirmed, stopping retry');
+            console.log('[JOIN] 12_JOIN_CONFIRMED_STOPPING_RETRIES');
             clearInterval(joinRetryInterval);
             joinRetryInterval = null;
             return;
         }
-        console.log('[JOIN] Retry join...');
+        console.log('[JOIN] 13_RETRY_ATTEMPT');
         emitJoin();
     }, 1500);
 }
