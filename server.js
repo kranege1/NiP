@@ -781,6 +781,11 @@ io.on('connection', (socket) => {
                     try {
                         const grokAllowed = !!p.grokEnabled && grok.isConfigured();
                         if (grokAllowed) {
+                            // Count remaining bots for batch generation hint
+                            const remainingBots = Object.values(room.players || {})
+                                .filter(bot => bot && bot.isBot && !(room.submitted || []).includes(bot.name))
+                                .length;
+                            
                             // Vary prompt per bot to increase diversity: include bot name, question
                             const personas = [
                                 'kreativ',
@@ -796,29 +801,45 @@ io.on('connection', (socket) => {
                             let prompt = '';
                             const correctAnswer = (room.realAnswer || '').trim();
                             
+                            // Request multiple different answers if there are multiple bots
+                            const numAnswers = Math.max(1, remainingBots);
+                            const answerFormat = numAnswers > 1 ? `Gib mir ${numAnswers} verschiedene falsche Antworten (jede auf einer neuen Zeile, nummeriert 1-${numAnswers}):` : `Erfinde EINE falsche Antwort:`;
+                            
                             if (correctAnswer) {
-                                // Intelligente Antwort: Wenn wir die richtige Antwort haben, generiere eine plausible FALSCHE Antwort derselben Kategorie
-                                prompt = `Du bist ${p.name}, ein ${persona}er Autor. Die Frage ist: "${q}"
+                                // Intelligente Antwort: Wenn wir die richtige Antwort haben, generiere plausible FALSCHE Antworten derselben Kategorie
+                                prompt = `Die Frage ist: "${q}"
 Die RICHTIGE Antwort ist: "${correctAnswer}"
 
-Deine Aufgabe: Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE Antwort, die:
-1. Zur gleichen Kategorie oder Art wie die richtige Antwort gehört (z.B. wenn die richtige Antwort ein Designer ist, antworte mit einem anderen Designer; wenn es ein Land ist, antworte mit einem anderen Land)
-2. Aber NICHT die richtige Antwort ist
-3. Plausibel und glaubwürdig klingt
-4. Neutral und sachlich formuliert ist (wie ein Lexikon)
-5. Keine Meta-Hinweise oder Anführungszeichen enthält
+${answerFormat}
+- Jede Antwort muss zur gleichen Kategorie oder Art wie die richtige Antwort gehören (z.B. wenn Antwort ein Designer ist → andere Designer; wenn Land → anderes Land)
+- NICHT die richtige Antwort
+- Plausibel und glaubwürdig
+- Neutral und sachlich (wie ein Lexikon)
+- 3-10 Wörter
+- Keine Meta-Hinweise oder Anführungszeichen
+- ALLE unterschiedlich voneinander
 
 Antworte direkt ohne Anmerkungen.`;
                             } else {
                                 // Fallback: alte Methode wenn keine richtige Antwort gespeichert
                                 const unrelatedTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme', 'Kochen', 'Handwerk', 'Kosmetik'];
                                 let topic = unrelatedTopics[Math.floor(Math.random() * unrelatedTopics.length)];
-                                prompt = `Du bist ${p.name}, ein ${persona}er Autor. Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE und thematisch FACHFREMDE Definition. Die Definition MUSS aus dem Themenbereich "${topic}" stammen und DARF NICHT aus dem Themenbereich der Frage kommen. Formuliere im Stil der vorhandenen Definitionen: eine knappe Nominalphrase oder sehr kurzer Satz, neutral, keine Hervorhebungen. Verwende den Begriff NICHT. Beginne nicht mit 'Begriff' oder 'der Begriff'. Antworte ohne Anmerkungen.`;
+                                prompt = `Die Frage ist: "${q}"
+
+${answerFormat}
+- Jede Antwort aus dem Themenbereich "${topic}"
+- FALSCH und sachlich formuliert
+- 3-10 Wörter
+- Keine Meta-Hinweise
+- ALLE unterschiedlich voneinander
+
+Antworte direkt ohne Anmerkungen.`;
                             }
 
                             // randomize temperature a bit for sampling diversity
                             const temp = 0.75 + Math.random() * 0.6; // ~0.75 - 1.35
-                            const res = await grok.generateResponse(prompt, undefined, temp, 140);
+                            const maxTokens = numAnswers > 1 ? 300 : 140;
+                            const res = await grok.generateResponse(prompt, undefined, temp, maxTokens);
                             if (res && res.success && res.response) {
                                 answerText = res.response.trim();
                                 // Persist Grok usage for bot generation
@@ -827,7 +848,7 @@ Antworte direkt ohne Anmerkungen.`;
                                 try {
                                     if (room.host) {
                                         const hostSocket = io.sockets.sockets.get(room.host);
-                                        if (hostSocket) hostSocket.emit('grokUsageNotification', { playerName: p.name });
+                                        if (hostSocket) hostSocket.emit('grokUsageNotification', { playerName: numAnswers > 1 ? `[Batch: ${numAnswers} Bots]` : p.name });
                                     }
                                 } catch (e) { /* ignore */ }
                             }
