@@ -995,26 +995,7 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
         socket.roomCode = ACTIVE_ROOM;
         socket.playerName = 'Admin';
         socket.isHost = true;
-        socket.adminPingPending = false;
         socket.emit('adminJoined');
-        
-        // Starte Health-Check: Wenn Admin nicht antwortet nach 30 Sekunden, ist er offline
-        const startAdminHealthCheck = () => {
-            if (!rooms[ACTIVE_ROOM] || rooms[ACTIVE_ROOM].host !== socket.id) return;
-            socket.adminPingPending = true;
-            socket.emit('adminPing');
-            
-            rooms[ACTIVE_ROOM].adminHealthCheck = setTimeout(() => {
-                if (socket.adminPingPending && rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].host === socket.id) {
-                    log(`[ADMIN-HEALTH] Admin ${socket.id} antwortet nicht - als offline gekennzeichnet`);
-                    socket.adminOffline = true;
-                    // Neuer Admin kann sich einloggen
-                }
-            }, 30000); // 30 Sekunden Timeout
-        };
-        
-        // Starte Health-Check nach 20 Sekunden
-        setTimeout(startAdminHealthCheck, 20000);
 
         // Always send a fresh snapshot so new admin tabs (even with high lastSeenSeq from shared localStorage) see current state
         try {
@@ -1049,24 +1030,8 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
     
     // Admin antwortet auf Ping (Health-Check)
     socket.on('adminPong', () => {
-        socket.adminPingPending = false;
-        if (rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].adminHealthCheck) {
-            clearTimeout(rooms[ACTIVE_ROOM].adminHealthCheck);
-            log(`[ADMIN-HEALTH] Admin ${socket.id} hat geantwortet - Health-Check OK`);
-            // Restart health check
-            setTimeout(() => {
-                if (socket.connected && rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].host === socket.id) {
-                    socket.adminPingPending = true;
-                    socket.emit('adminPing');
-                    rooms[ACTIVE_ROOM].adminHealthCheck = setTimeout(() => {
-                        if (socket.adminPingPending && rooms[ACTIVE_ROOM] && rooms[ACTIVE_ROOM].host === socket.id) {
-                            log(`[ADMIN-HEALTH] Admin ${socket.id} antwortet nicht - als offline gekennzeichnet`);
-                            socket.adminOffline = true;
-                        }
-                    }, 30000);
-                }
-            }, 20000);
-        }
+        // Admin ist aktiv - keine weitere Action nötig
+        log(`[ADMIN-HEALTH] Admin ${socket.id} ist aktiv`);
     });
     
     // Neuer Admin kann alten Admin kicken wenn dieser offline ist

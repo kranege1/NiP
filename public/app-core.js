@@ -369,11 +369,6 @@ socket.on('ping', () => {
     }, 10000);
 });
 
-// Admin-spezifischer Ping (Health-Check)
-socket.on('adminPing', () => {
-    socket.emit('adminPong');
-});
-
 // Admin wurde von neuem Admin gekickt
 socket.on('adminKicked', (data) => {
     alert(`Admin-Sitzung beendet: ${data.reason || 'Ein neuer Admin hat die Kontrolle übernommen'}`);
