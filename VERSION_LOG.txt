@@ -17,3 +17,5 @@
 2026-01-03T06:10:00.000Z | NiP - V315 | Fix toggleRealAnswer button: add function and event listener
 2026-01-03T06:25:00.000Z | NiP - V316 | Optimize bot answers: use correct answer context for intelligent alternatives
 2026-01-03T06:40:00.000Z | NiP - V317 | Request multiple bot answers in single Grok prompt for diversity
+2026-01-03T07:00:00.000Z | NiP - V318 | Fix bot answer batch processing: parse numbered responses and distribute to bots
+2026-01-03T07:20:00.000Z | NiP - V319 | Add QR-Code button in admin overlay to display game join QR code
