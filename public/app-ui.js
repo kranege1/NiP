@@ -2,10 +2,12 @@
 
 // Player list rendering for regular players and admin list rendering
 socket.on('updatePlayers', (players) => {
+    console.log('[COLOR-DEBUG] updatePlayers received:', players);
     const sorted = sortPlayersForDisplay(players || []);
     
     // Cache colors from server
     cacheColorsFromList(sorted);
+    console.log('[COLOR-DEBUG] After cacheColorsFromList, colorCache:', Array.from(colorCache.entries()));
     
     const listEl = document.getElementById('playersList');
     if (sorted.length === 0) {
@@ -17,8 +19,10 @@ socket.on('updatePlayers', (players) => {
             div.innerHTML = '• ';
             const span = document.createElement('span');
             const name = (typeof p === 'string') ? p : (p.name || '');
+            const playerColor = (p && p.color) ? p.color : getColorForName(name);
+            console.log('[COLOR-DEBUG] Player in list:', name, 'color from p:', p?.color, 'final color:', playerColor);
             span.textContent = name;
-            span.style.color = (p && p.color) ? p.color : getColorForName(name);
+            span.style.color = playerColor;
             div.appendChild(span);
             listEl.appendChild(div);
         });

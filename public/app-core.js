@@ -505,6 +505,8 @@ function updateAnsweredHeaderNames() {
     const playerSpans = document.querySelectorAll('#playerNameInHeader');
     const display = myPlayerName ? `(${myPlayerName})` : '';
     const color = myPlayerName ? getColorForName(myPlayerName) : null;
+    
+    console.log('[COLOR-DEBUG] updateAnsweredHeaderNames - myPlayerName:', myPlayerName, 'color:', color, 'colorCache:', Array.from(colorCache.entries()));
 
     // Update all player header instances (there are multiple in the DOM)
     playerSpans.forEach(el => {
