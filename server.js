@@ -984,7 +984,6 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
                 clearTimeout(rooms[ACTIVE_ROOM].adminHealthCheck);
                 log(`Alter Admin Health-Check abgebrochen`);
             }
-        }
             rooms[ACTIVE_ROOM].host = socket.id;
             rooms[ACTIVE_ROOM].votes = rooms[ACTIVE_ROOM].votes || {};
             rooms[ACTIVE_ROOM].points = rooms[ACTIVE_ROOM].points || {};
