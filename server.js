@@ -1622,12 +1622,17 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
 
     // Admin requests to reveal/present results to all players
     socket.on('presentResults', () => {
-        if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
+        log(`[DEBUG-PRESENT] Event received - isHost: ${socket.isHost}, roomExists: ${!!rooms[ACTIVE_ROOM]}`);
+        if (!socket.isHost || !rooms[ACTIVE_ROOM]) {
+            log(`[DEBUG-PRESENT] Blocked - isHost: ${socket.isHost}, roomExists: ${!!rooms[ACTIVE_ROOM]}`);
+            return;
+        }
 
         const room = rooms[ACTIVE_ROOM];
         
         // Prüfe ob bereits abgestimmt wurde
         const hasVotes = room.votes && Object.keys(room.votes).length > 0;
+        log(`[DEBUG-PRESENT] hasVotes: ${hasVotes}, voteCount: ${Object.keys(room.votes || {}).length}`);
         if (!hasVotes) {
             // Noch nicht abgestimmt - frage Admin nach Bestätigung
             log(`[SERVER] Admin versucht Ergebnisse zu präsentieren ohne Abstimmung`);
