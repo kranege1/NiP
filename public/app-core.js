@@ -535,7 +535,8 @@ socket.on('adminJoined', () => {
 });
 
 socket.on('joinedRoom', ({ isHost: host }) => {
-    console.log('[JOIN] 14_JOINED_ROOM_EVENT_RECEIVED - isHost:', host);\n    isHost = host;
+    console.log('[JOIN] 14_JOINED_ROOM_EVENT_RECEIVED - isHost:', host);
+    isHost = host;
     console.log('[JOIN] 15_IS_HOST_SET:', isHost);
     joined = true;
     console.log('[JOIN] 16_JOINED_FLAG_SET_TRUE');
