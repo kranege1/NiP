@@ -378,21 +378,14 @@ function showQRCodeOverlay() {
         body.style.textAlign = 'center';
         body.style.padding = '30px';
         
-        const qrImage = document.createElement('img');
-        qrImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAMbklEQVR4nO3dQW4bRxaA4ao5gs/gE/gAPoPP4BP4BD6Bj+AT+Ag+go/gI+gEPoFPoBP4BD6CfIC5wBQMWbIt2SSpma5+X2FAtuPYFln189Wrql83AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADg+/1z6zsAgJ/xxwN/fn0P9wEA3+VhYP0cXhcA+CaPgyv/fge3AwD/5/d1cD0G2HX42h+h9XCfAPDD/vrOwfWlv/u7t/3xP7/y5wDwLX4JrvfhdfMP//a3X/xzAPgmfweg/V/4swD4Br8FWNvvfxsA/of/hNZ1+PWl8Lq+pP8GAD/gZVjdf+N//Y8HoQUwI09D6kfDylICYGZ+n/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB6b+g4A4LGp7wAAHpv6DgDgsanvAAAem/oOAOCxqe8AAB77N+1d7vvwKw6MAAAAASUVORK5CYII='; // Base64 of uploaded QR code
-        qrImage.alt = 'QR-Code';
-        qrImage.style.maxWidth = '100%';
-        qrImage.style.height = 'auto';
-        qrImage.style.borderRadius = '12px';
+        const iframe = document.createElement('iframe');
+        iframe.src = 'URL-QR.html';
+        iframe.style.width = '100%';
+        iframe.style.height = '500px';
+        iframe.style.border = 'none';
+        iframe.style.borderRadius = '8px';
         
-        const instruction = document.createElement('p');
-        instruction.textContent = 'Scanne diesen Code, um dem Spiel beizutreten';
-        instruction.style.marginTop = '20px';
-        instruction.style.color = '#aaa';
-        instruction.style.fontSize = '14px';
-        
-        body.appendChild(qrImage);
-        body.appendChild(instruction);
+        body.appendChild(iframe);
         
         box.appendChild(body);
         overlay.appendChild(box);
