@@ -3,6 +3,10 @@
 // Player list rendering for regular players and admin list rendering
 socket.on('updatePlayers', (players) => {
     const sorted = sortPlayersForDisplay(players || []);
+    
+    // Cache colors from server
+    cacheColorsFromList(sorted);
+    
     const listEl = document.getElementById('playersList');
     if (sorted.length === 0) {
         listEl.innerHTML = 'Keine verbunden';
@@ -22,10 +26,19 @@ socket.on('updatePlayers', (players) => {
     if (Array.isArray(sorted)) {
         lastPlayers = sorted;
     }
+    
+    // Update header names with correct colors
+    if (typeof updateAnsweredHeaderNames === 'function') {
+        updateAnsweredHeaderNames();
+    }
 });
 
 socket.on('updatePlayersAdmin', (players) => {
     const sortedPlayers = sortPlayersForDisplay(players || []);
+    
+    // Cache colors from server
+    cacheColorsFromList(sortedPlayers);
+    
     lastAdminPlayers = sortedPlayers;
     
     function renderPlayers(targetEl) {
