@@ -7,6 +7,9 @@ function joinGame() {
     if (!name) return alert('Name eingeben!');
     myPlayerName = name;
     
+    // Clear kick flag on manual join attempt
+    sessionStorage.removeItem('wasKicked');
+    
     console.log('[JOIN] Starting join process for:', name);
 
     // helper to emit join with throttling reset
