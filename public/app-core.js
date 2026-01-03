@@ -448,6 +448,7 @@ async function loadAppVersion() {
             const data = await res.json();
             if (data && data.version) {
                 APP_VERSION = data.version;
+                console.log('[VERSION] Loaded:', APP_VERSION);
                 // Detect version change and reload if needed
                 if (lastKnownVersion && lastKnownVersion !== APP_VERSION) {
                     console.log('[APP] New version detected:', APP_VERSION, '- reloading page...');
@@ -460,13 +461,20 @@ async function loadAppVersion() {
     } catch (e) {
         console.warn('[APP] Version konnte nicht geladen werden', e);
     }
+    // Update badge text
     try {
         const badge = document.getElementById('appVersion');
-        if (badge) badge.textContent = APP_VERSION;
+        if (badge) {
+            badge.textContent = APP_VERSION;
+            console.log('[VERSION] Badge updated:', APP_VERSION);
+        } else {
+            console.warn('[VERSION] Badge element not found yet');
+        }
     } catch (_) { /* ignore */ }
 }
 
-loadAppVersion();
+// Delay initial version load to ensure DOM is ready
+setTimeout(loadAppVersion, 500);
 // Check for new version every 30 seconds
 setInterval(loadAppVersion, 30000);
 
