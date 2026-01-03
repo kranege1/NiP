@@ -576,7 +576,9 @@ io.on('connection', (socket) => {
         // regular player list (names only) - markiere offline Spieler
         const playerList = sortPlayersList(Object.values(room.players).map(p => {
             const suffix = p.offline ? ' (offline)' : '';
-            return { name: p.name + suffix, color: p.color || pickColorForName(p.name), offline: !!p.offline, isBot: !!p.isBot };
+            // Calculate color BEFORE adding suffix to name
+            const color = p.color || pickColorForName(p.name);
+            return { name: p.name + suffix, color: color, offline: !!p.offline, isBot: !!p.isBot };
         }));
         io.to(roomCode).emit('updatePlayers', playerList);
 
@@ -594,7 +596,9 @@ io.on('connection', (socket) => {
                     const m = ('' + ip).match(/(?:\d+\.\d+\.\d+\.)?(\d+)$/);
                     const last = m ? m[1] : ip;
                     const suffix = p.offline ? ' (offline)' : '';
-                    return { id, name: p.name + suffix, ipLastOctet: last, grokEnabled: !!p.grokEnabled, color: p.color || pickColorForName(p.name), isBot: !!p.isBot };
+                    // Calculate color BEFORE adding suffix to name
+                    const color = p.color || pickColorForName(p.name);
+                    return { id, name: p.name + suffix, ipLastOctet: last, grokEnabled: !!p.grokEnabled, color: color, isBot: !!p.isBot };
                 }));
                 hostSocket.emit('updatePlayersAdmin', adminList);
             }
