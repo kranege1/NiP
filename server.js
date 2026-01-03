@@ -1625,6 +1625,30 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
         if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
 
         const room = rooms[ACTIVE_ROOM];
+        
+        // Prüfe ob bereits abgestimmt wurde
+        const hasVotes = room.votes && Object.keys(room.votes).length > 0;
+        if (!hasVotes) {
+            // Noch nicht abgestimmt - frage Admin nach Bestätigung
+            log(`[SERVER] Admin versucht Ergebnisse zu präsentieren ohne Abstimmung`);
+            socket.emit('votingCheckRequired', { 
+                hasVotes: false,
+                message: 'Achtung: Es wurde noch nicht abgestimmt! Möchtest du wirklich die Ergebnisse zeigen oder sollen die Spieler noch abstimmen?'
+            });
+            return;
+        }
+
+        // Wenn Votes vorhanden, fahre fort
+        proceedWithPresentResults(socket, room);
+    });
+    
+    socket.on('proceedPresentResults', () => {
+        if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
+        const room = rooms[ACTIVE_ROOM];
+        proceedWithPresentResults(socket, room);
+    });
+    
+    function proceedWithPresentResults(socket, room) {
 
         // Use the shuffled answers if available, otherwise build from scratch
         let allAnswers;
@@ -1679,7 +1703,7 @@ Antworte exakt im Format: 1. [Antwort] 2. [Antwort] etc. Keine Bulletpoints.`;
         emitWithSeqToRoom(ACTIVE_ROOM, 'revealAnswers', { lettered, realIndex });
         log(`[SERVER] emitted revealAnswers -> count=${lettered.length} realIndex=${realIndex}`);
         log('Ergebnisse präsentiert');
-    });
+    }
 
     // Admin sendet richtige Antwort â†’ endgÃ¼ltig mischen
     socket.on('submitRealAnswer', (realAnswer) => {

@@ -804,6 +804,16 @@ socket.on('showAllAnswers', (answers) => {
     console.log('[ADMIN] showAllAnswers rendered');
 });
 
+socket.on('votingCheckRequired', ({ hasVotes, message }) => {
+    // Admin will Ergebnisse präsentieren, aber noch nicht abgestimmt
+    const choice = confirm(`${message}\n\n[OK] Ergebnisse zeigen | [Abbrechen] Zurück zum Abstimmen`);
+    if (choice) {
+        // Admin bestätigt: Fortfahren mit Ergebnissen
+        emitBuffered('proceedPresentResults', {});
+    }
+    // Sonst: Zurück zum Spiel (kein Emit)
+});
+
 socket.on('revealAnswers', ({ lettered, realIndex }) => {
     currentAnswers = lettered;
     lastRealIndex = (typeof realIndex === 'number') ? realIndex : null;
