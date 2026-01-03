@@ -806,7 +806,9 @@ socket.on('showAllAnswers', (answers) => {
 
 socket.on('votingCheckRequired', ({ hasVotes, message }) => {
     // Admin will Ergebnisse präsentieren, aber noch nicht abgestimmt
+    console.log('[DEBUG] votingCheckRequired received:', { hasVotes, message });
     const choice = confirm(`${message}\n\n[OK] Ergebnisse zeigen | [Abbrechen] Zurück zum Abstimmen`);
+    console.log('[DEBUG] User choice:', choice);
     if (choice) {
         // Admin bestätigt: Fortfahren mit Ergebnissen
         emitBuffered('proceedPresentResults', {});
