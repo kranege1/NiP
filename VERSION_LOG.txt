@@ -4,3 +4,10 @@
 2025-12-30T18:10:29.802Z | NiP - V220 | Code-Updates angewendet
 2025-12-31T06:08:17.519Z | NiP - V221 | Code-Updates angewendet
 2025-12-31T07:00:58.013Z | NiP - V222 | Admin-UI & Bot-Management
+2026-01-02T14:57:04.000Z | NiP - V305 | Prevent auto-rejoin after player kick
+2026-01-03T04:42:05.000Z | NiP - V306 | Clear kick flag on manual join attempt
+2026-01-03T04:44:32.000Z | NiP - V307 | Add comprehensive join logging for debugging
+2026-01-03T04:47:20.000Z | NiP - V308 | Fix syntax error in joinedRoom event handler
+2026-01-03T04:48:47.000Z | NiP - V309 | Fix version badge: delay load and add logging
+2026-01-03T04:51:43.000Z | NiP - V310 | Add joinGameBtn event listener in bootstrap
+2026-01-03T04:55:51.000Z | NiP - V311 | Fix player color calculation: use original name without offline suffix
