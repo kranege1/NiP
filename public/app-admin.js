@@ -380,7 +380,7 @@ function showQRCodeOverlay() {
         body.style.padding = '40px';
         
         const qrImage = document.createElement('img');
-        qrImage.src = 'qr-code.png';
+        qrImage.src = 'NiP_QR.png';
         qrImage.alt = 'QR-Code zum Beitreten';
         qrImage.style.maxWidth = '100%';
         qrImage.style.height = 'auto';
