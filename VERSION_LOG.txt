@@ -15,3 +15,4 @@
 2026-01-03T05:40:00.000Z | NiP - V313 | Fix player header colors: cache colors from updatePlayers events
 2026-01-03T05:55:00.000Z | NiP - V314 | Add debug logging for player color synchronization
 2026-01-03T06:10:00.000Z | NiP - V315 | Fix toggleRealAnswer button: add function and event listener
+2026-01-03T06:25:00.000Z | NiP - V316 | Optimize bot answers: use correct answer context for intelligent alternatives

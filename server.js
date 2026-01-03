@@ -792,14 +792,29 @@ io.on('connection', (socket) => {
                             ];
                             const persona = personas[Math.floor(Math.random() * personas.length)];
 
-                            // pick an unrelated topic to force fachfremde (incorrect) answers
-                            const unrelatedTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme', 'Kochen', 'Handwerk', 'Kosmetik'];
-                            let topic = unrelatedTopics[Math.floor(Math.random() * unrelatedTopics.length)];
-                            // Ensure topic string safe
-                            topic = String(topic);
+                            // Build smarter prompt with correct answer context
+                            let prompt = '';
+                            const correctAnswer = (room.realAnswer || '').trim();
+                            
+                            if (correctAnswer) {
+                                // Intelligente Antwort: Wenn wir die richtige Antwort haben, generiere eine plausible FALSCHE Antwort derselben Kategorie
+                                prompt = `Du bist ${p.name}, ein ${persona}er Autor. Die Frage ist: "${q}"
+Die RICHTIGE Antwort ist: "${correctAnswer}"
 
-                            // Build prompt: instruct Grok to invent a FALSE definition from an unrelated topic
-                                const prompt = `Du bist ${p.name}, ein ${persona}er Autor. Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE und thematisch FACHFREMDE Definition. Die Definition MUSS aus dem Themenbereich "${topic}" stammen und DARF NICHT aus dem Themenbereich der Frage kommen. Formuliere im Stil der vorhandenen Definitionen: eine knappe Nominalphrase oder sehr kurzer Satz, neutral, keine Hervorhebungen. Verwende den Begriff NICHT. Beginne nicht mit 'Begriff' oder 'der Begriff'. Antworte ohne Anmerkungen.`;
+Deine Aufgabe: Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE Antwort, die:
+1. Zur gleichen Kategorie oder Art wie die richtige Antwort gehört (z.B. wenn die richtige Antwort ein Designer ist, antworte mit einem anderen Designer; wenn es ein Land ist, antworte mit einem anderen Land)
+2. Aber NICHT die richtige Antwort ist
+3. Plausibel und glaubwürdig klingt
+4. Neutral und sachlich formuliert ist (wie ein Lexikon)
+5. Keine Meta-Hinweise oder Anführungszeichen enthält
+
+Antworte direkt ohne Anmerkungen.`;
+                            } else {
+                                // Fallback: alte Methode wenn keine richtige Antwort gespeichert
+                                const unrelatedTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme', 'Kochen', 'Handwerk', 'Kosmetik'];
+                                let topic = unrelatedTopics[Math.floor(Math.random() * unrelatedTopics.length)];
+                                prompt = `Du bist ${p.name}, ein ${persona}er Autor. Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE und thematisch FACHFREMDE Definition. Die Definition MUSS aus dem Themenbereich "${topic}" stammen und DARF NICHT aus dem Themenbereich der Frage kommen. Formuliere im Stil der vorhandenen Definitionen: eine knappe Nominalphrase oder sehr kurzer Satz, neutral, keine Hervorhebungen. Verwende den Begriff NICHT. Beginne nicht mit 'Begriff' oder 'der Begriff'. Antworte ohne Anmerkungen.`;
+                            }
 
                             // randomize temperature a bit for sampling diversity
                             const temp = 0.75 + Math.random() * 0.6; // ~0.75 - 1.35
