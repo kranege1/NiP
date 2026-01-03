@@ -1,5 +1,31 @@
 /* Admin-specific functionality: bots, player management, grok stats */
 
+/* Toggle real answer visibility */
+function toggleRealAnswer() {
+    const realWrap = document.getElementById('realAnswerWrapper');
+    const toggleBtn = document.getElementById('toggleRealAnswerBtn');
+    
+    if (!realWrap || !toggleBtn) return;
+    
+    const isVisible = realWrap.style.display === 'block';
+    
+    if (isVisible) {
+        realWrap.style.display = 'none';
+        toggleBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="/icons.svg#eye"></use></svg> Antwort einblenden';
+    } else {
+        realWrap.style.display = 'block';
+        toggleBtn.innerHTML = '<svg class="icon" aria-hidden="true"><use href="/icons.svg#eye-off"></use></svg> Antwort ausblenden';
+        // Focus the textarea
+        const realAnswerInput = document.getElementById('realAnswerInput');
+        if (realAnswerInput) {
+            setTimeout(() => {
+                realAnswerInput.focus();
+                realAnswerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }
+}
+
 /* Bot management */
 function ensureBotsUI() {
     const botInput = document.getElementById('botCountInput');

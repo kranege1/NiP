@@ -130,6 +130,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (_) {}
 
+  // Admin: toggle real answer visibility
+  try {
+    const toggleRealAnswerBtn = document.getElementById('toggleRealAnswerBtn');
+    if (toggleRealAnswerBtn && typeof toggleRealAnswer === 'function') {
+      toggleRealAnswerBtn.addEventListener('click', toggleRealAnswer);
+    }
+  } catch (_) {}
+
   // Player: join game
   try {
     const joinGameBtn = document.getElementById('joinGameBtn');
