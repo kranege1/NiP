@@ -25,14 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const lastSeenSeq = Number(localStorage.getItem('np_last_seq') || '0') || 0;
-      socket.emit('adminConnect', { lastSeenSeq });
+      emitBuffered('adminConnect', { lastSeenSeq });
     } catch (_) {}
 
     // Reconnect automatically when server restarts or connection drops
     socket.on('connect', () => {
       try {
         const lastSeenSeq = Number(localStorage.getItem('np_last_seq') || '0') || 0;
-        socket.emit('adminConnect', { lastSeenSeq });
+        emitBuffered('adminConnect', { lastSeenSeq });
       } catch (_) {}
     });
 
