@@ -17,4 +17,15 @@
 2026-01-03T06:10:00.000Z | NiP - V315 | Fix toggleRealAnswer button: add function and event listener
 2026-01-03T06:25:00.000Z | NiP - V316 | Optimize bot answers: use correct answer context for intelligent alternatives
 2026-01-03T06:40:00.000Z | NiP - V317 | Request multiple bot answers in single Grok prompt for diversity
-2026-01-03T07:00:00.000Z | NiP - V318 | Fix bot answer batch processing: parse numbered responses and distribute to bots2026-01-03T05:45:40.284Z | NiP - V322 | QR-Code zeigt NiP_QR.png (Fix); Version counter auf 321 korrigiert
+2026-01-03T07:00:00.000Z | NiP - V318 | Fix bot answer batch processing: parse numbered responses and distribute to bots
+2026-01-03T08:15:40.000Z | NiP - V319 | QR-Code button im Admin-Overlay (Base64 Version)
+2026-01-03T08:30:00.000Z | NiP - V320 | Versuch iframe für QR-Code (User rejected)
+2026-01-03T09:00:00.000Z | NiP - V321 | QR-Code-Button zeigt jetzt NiP_QR.png statt Base64
+2026-01-03T09:20:00.000Z | NiP - V322 | QR-Code Fix + Version counter korrigiert
+2026-01-03T09:30:00.000Z | NiP - V323 | NiP_QR.png hinzugefügt (fehlte in Git)
+2026-01-03T10:00:00.000Z | NiP - V324 | Admin-Health-Check + Kick-Funktion für unerreichbare Admins
+2026-01-03T10:15:00.000Z | NiP - V325 | Fix Syntax-Fehler in adminConnect (Klammer)
+2026-01-03T10:30:00.000Z | NiP - V326 | Vereinfache Admin-Health-Check (entferne komplexe Timeouts die Spieler blockieren)
+2026-01-03T10:45:00.000Z | NiP - V327 | Fix zweiter Spieler bug - IP-basierter State blockierte mehrere Spieler von gleicher IP
+2026-01-03T11:00:00.000Z | NiP - V328 | Voting-Check vor Ergebnis-Präsentation - Admin muss bestätigen falls noch nicht abgestimmt
+
