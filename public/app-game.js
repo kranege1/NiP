@@ -185,6 +185,9 @@ function sendQuestion() {
         }
         
         emitBuffered('sendQuestion', { question: q, area: areaName });
+        
+        // Automatisch auch "Richtige Antwort senden & mischen" aufrufen
+        submitReal();
     }
 }
 
