@@ -130,6 +130,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   } catch (_) {}
 
+  // Player: join game
+  try {
+    const joinGameBtn = document.getElementById('joinGameBtn');
+    if (joinGameBtn && typeof joinGame === 'function') {
+      joinGameBtn.addEventListener('click', joinGame);
+      console.log('[BOOTSTRAP] joinGameBtn listener attached');
+    } else {
+      console.warn('[BOOTSTRAP] joinGameBtn not found or joinGame not defined', { btn: !!joinGameBtn, fn: typeof joinGame });
+    }
+  } catch (e) {
+    console.error('[BOOTSTRAP] Error attaching joinGameBtn:', e);
+  }
+
   // Player: submit invented answer
   try {
     const submitAnswerBtn = document.getElementById('submitAnswerBtn');
