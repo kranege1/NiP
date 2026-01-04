@@ -28,4 +28,11 @@
 2026-01-03T10:30:00.000Z | NiP - V326 | Vereinfache Admin-Health-Check (entferne komplexe Timeouts die Spieler blockieren)
 2026-01-03T10:45:00.000Z | NiP - V327 | Fix zweiter Spieler bug - IP-basierter State blockierte mehrere Spieler von gleicher IP
 2026-01-03T11:00:00.000Z | NiP - V328 | Voting-Check vor Ergebnis-Präsentation - Admin muss bestätigen falls noch nicht abgestimmt
-
+2026-01-03T11:15:00.000Z | NiP - V329 | Repair VERSION_LOG.txt corruption and add missing entries
+2026-01-03T11:30:00.000Z | NiP - V330 | Fix critical bug - submitVote was blocked for all players (checked isHost instead of playerName)
+2026-01-03T11:45:00.000Z | NiP - V331 | Auto-trigger submitReal() when sendQuestion() is called
+2026-01-03T12:00:00.000Z | NiP - V332 | Fix adminConnect lost on reconnect - use emitBuffered instead of socket.emit
+2026-01-03T12:15:00.000Z | NiP - V333 | Add debug logging to presentResults to diagnose why button does nothing
+2026-01-03T12:30:00.000Z | NiP - V334 | Add client-side debug logging for votingCheckRequired event
+2026-01-03T12:45:00.000Z | NiP - V335 | Fix critical bug - app.js was not loaded in index.html, votingCheckRequired listener was never registered
+2026-01-03T13:00:00.000Z | NiP - V336 | Update version_counter to 335 to sync with deployed versions
