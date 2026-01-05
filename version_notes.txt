@@ -1,0 +1,1 @@
+Auto-Versionierung aktiviert; Badges beziehen Version via /api/version und loggen in VERSION_LOG. Bitte diesen Text vor dem nächsten Start mit den neuen Änderungen ersetzen.

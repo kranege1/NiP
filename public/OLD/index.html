@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nobody is Perfect</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/terms.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; min-height: 100vh; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://thumbs.dreamstime.com/b/cozy-game-night-board-games-snacks-soft-cushions-cozy-game-night-board-games-snacks-soft-cushions-picture-354986542.jpg') center/cover fixed; color: white; text-align: center; position: relative; }
+        h1, h2, h3 { text-shadow: 2px 2px 6px black; }
+        #playersPanel { position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 12px; max-width: 300px; text-align: left; font-size: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 100; }
+        #playersPanel h3 { margin: 0 0 10px 0; text-align: center; }
+        .input-wrapper { position: relative; width: 85%; max-width: 800px; margin: 20px auto; }
+        input[type="text"], textarea { width: 100%; padding: 14px 50px 14px 14px; font-size: 20px; border-radius: 12px; border: 2px solid white; background: rgba(255,255,255,0.4); color: rgb(255, 255, 255); box-sizing: border-box; caret-color: #000000; resize: vertical; min-height: 44px; }
+        textarea { white-space: pre-wrap; word-wrap: break-word; }
+        input[type="text"], textarea:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.06); }
+        /* make placeholder text brighter and fully opaque for better visibility */
+        ::placeholder { color: rgba(255,255,255,0.95); opacity: 1; }
+        :-ms-input-placeholder { color: rgba(255,255,255,0.95); }
+        ::-ms-input-placeholder { color: rgba(255,255,255,0.95); }
+        ::-webkit-input-placeholder { color: rgba(255,255,255,0.95); }
+        .clear-btn { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.4); border: none; border-radius: 50%; width: 36px; height: 36px; color: white; font-size: 24px; cursor: pointer; opacity: 0.7; display: flex; align-items: center; justify-content: center; }
+        .clear-btn:hover { opacity: 1; background: rgba(255,255,255,0.6); }
+        button { width: 85%; max-width: 500px; padding: 18px; font-size: 22px; margin: 15px auto; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
+        button:active { transform: scale(0.98); }
+        button.primary { background: #4CAF50; color: white; }
+        button.admin { background: #4CAF50; }
+        button.random { background: #4CAF50; color: white; font-weight: bold; }
+        button.reset { background: #000000; color: white; font-weight: bold; }
+        button.read { background: #012f55; font-weight: bold; }
+        .answer { background: rgba(255,255,255,0.95); color: #333; padding: 20px; margin: 15px auto; border-radius: 12px; max-width: 700px; font-size: 20px; text-align: left; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        #topLeftControls { position: fixed; top: 10px; left: 10px; display: flex; gap: 8px; align-items: center; z-index: 200; }
+        #topLeftControls #connectionStatus { padding: 8px 12px; background: rgba(0,0,0,0.7); border-radius: 12px; font-size: 16px; color: inherit; display: inline-flex; align-items: center; gap: 8px; }
+        #topLeftControls #connectionStatus .reset { padding: 6px 10px; font-size: 20px; line-height: 1; border-radius: 8px; width: auto; height: 36px; background: #000000; color: white; border: none; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+        /* inline (document-flow) presentation for status and players */
+        #topLeftControls.inline, #playersPanel.inline { position: static !important; top: auto !important; right: auto !important; left: auto !important; width: 100% !important; max-width: none !important; margin: 12px 0 !important; box-shadow: none !important; }
+        #topLeftControls.inline #connectionStatus { display: flex; justify-content: space-between; padding: 10px; background: rgba(0,0,0,0.7); }
+        @media (max-width: 700px) {
+            /* ensure fixed styles do not interfere on small screens */
+            #topLeftControls, #playersPanel { position: static; width: 100%; max-width: none; margin: 12px 0; box-shadow: none; }
+        }
+        #currentQuestion { font-size: 28px; font-weight: bold; margin: 30px; padding: 20px; background: rgba(255,255,255,0.3); border-radius: 12px; border: 3px solid #4CAF50; }
+        #submittedList { margin: 30px; padding: 15px; background: rgba(255,255,255,0.2); border-radius: 12px; font-size: 18px; line-height: 1.8; }
+        #adminSubmitted { font-weight: bold; color: lime; }
+    </style>
+</head>
+<body>
+    <div id="topLeftControls">
+        <div id="connectionStatus"><span id="connectionStatusText">🔄 Prüfe Verbindung...</span> <button id="resetTopBtn" class="reset" style="display:none;">🔄</button></div>
+    </div>
+
+    <div id="playersPanel">
+        <h3>Aktuelle Spieler</h3>
+        <div id="playersList">Keine verbunden</div>
+    </div>
+
+    <h1>🎲 Nobody is Perfect </h1>
+
+    <div id="adminView" style="display:none;">
+        <h2>Admin-Steuerung</h2>
+        <button class="random" onclick="loadRandomTerm()">🎲 Zufälligen Begriff laden</button>
+
+        <div class="input-wrapper">
+            <textarea id="questionInput" placeholder="Begriff / Frage eingeben" rows="2"></textarea>
+            <button class="clear-btn" onclick="clearInput('questionInput')">×</button>
+        </div>
+        <button class="primary" onclick="sendQuestion()">Frage an alle senden</button>
+
+        <div class="input-wrapper">
+            <textarea id="realAnswerInput" placeholder="Richtige Definition eingeben" rows="2"></textarea>
+            <button class="clear-btn" onclick="clearInput('realAnswerInput')">×</button>
+        </div>
+        <button class="admin" onclick="submitReal()">Richtige Antwort senden & mischen</button>
+        <br>
+        <button class="primary" onclick="newRound()">Neue Runde starten</button>
+
+        <h2 style="margin-top:40px">Aktuelle Frage:</h2>
+        <div id="currentQuestionAdmin">Noch keine Frage gesendet</div>
+
+        <h3>Wer hat schon geantwortet? (live)</h3>
+        <div id="submittedListAdmin">Warte auf Antworten...</div>
+
+        <button id="readBtn" class="read" style="display:none;" onclick="readAloud()">🔊 Alle vorlesen lassen</button>
+        <div id="answersList"></div>
+    </div>
+
+    <!-- insertion point for mobile layout: move status and players here on small screens -->
+    <div id="mobileInsertionPoint"></div>
+    <!-- container for players: place connection status and players list at the bottom for non-admins -->
+    <div id="bottomInfo"></div>
+
+    <div id="playerSetup">
+        <h2>Spieler: Gib deinen Namen ein</h2>
+        <div class="input-wrapper">
+            <textarea id="playerName" placeholder="Dein Name" rows="1"></textarea>
+            <button class="clear-btn" onclick="clearInput('playerName')">×</button>
+        </div>
+        <button class="primary" onclick="joinGame()">Beitreten</button>
+        <p>Warte auf den Admin...</p>
+    </div>
+
+    <div id="playerGame" style="display:none;">
+        <div id="currentQuestion" style="display:none;"></div>
+        <div id="waitingMessage">Warte auf die Frage vom Admin...</div>
+
+        <div id="answerSection" style="display:none;">
+            <h3>Deine erfundene Antwort:</h3>
+            <div class="input-wrapper">
+                <textarea id="answerInput" placeholder="Hier kreativ lügen..." rows="2"></textarea>
+                <button class="clear-btn" onclick="clearInput('answerInput')">×</button>
+            </div>
+            <button class="primary" onclick="submitAnswer()">Senden / Aktualisieren</button>
+        </div>
+
+        <h3>Wer hat schon geantwortet?</h3>
+        <div id="submittedList">Warte auf Frage...</div>
+    </div>
+
+    <script>
+        const socket = io();
+        let isHost = false;
+        let currentAnswers = [];
+        let connectionTimeout;
+        let voices = [];
+        // simple debounce helper to avoid spamming the socket while typing
+        function debounce(fn, delay = 300) {
+            let t;
+            return function(...args) {
+                clearTimeout(t);
+                t = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        if (typeof nobodyIsPerfectTerms === 'undefined' || nobodyIsPerfectTerms.length === 0) {
+            console.error('terms.js fehlt!');
+            alert('Begriffsliste fehlt – bitte terms.js anlegen');
+        }
+
+        function toggleClearButtons() {
+            document.querySelectorAll('.input-wrapper input, .input-wrapper textarea').forEach(input => {
+                const btn = input.parentElement.querySelector('.clear-btn');
+                if (!btn) return;
+                btn.style.display = input.value.trim() !== '' ? 'flex' : 'none';
+            });
+        }
+
+        function clearAllTextInputs() {
+            document.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                input.value = '';
+            });
+            toggleClearButtons();
+        }
+
+            // move status and players under the controls so they appear below buttons/textareas
+            (function moveStatusAndPlayersUnderControls() {
+                const topLeft = document.getElementById('topLeftControls');
+                const playersPanel = document.getElementById('playersPanel');
+                const mobilePoint = document.getElementById('mobileInsertionPoint');
+                if (mobilePoint && topLeft && playersPanel) {
+                    mobilePoint.appendChild(topLeft);
+                    mobilePoint.appendChild(playersPanel);
+                    topLeft.classList.add('inline');
+                    playersPanel.classList.add('inline');
+                }
+
+                // additionally, for non-admin (player) pages, move both boxes to the end of the document
+                if (new URLSearchParams(window.location.search).get('admin') === null) {
+                    if (topLeft && playersPanel) {
+                        document.body.appendChild(topLeft);
+                        document.body.appendChild(playersPanel);
+                        topLeft.classList.add('inline');
+                        playersPanel.classList.add('inline');
+                    }
+                }
+            })();
+
+        function clearInput(id) {
+            document.getElementById(id).value = '';
+            toggleClearButtons();
+            document.getElementById(id).focus();
+        }
+
+        document.querySelectorAll('input[type="text"], textarea').forEach(input => {
+            input.addEventListener('input', toggleClearButtons);
+            input.addEventListener('focus', toggleClearButtons);
+        });
+
+        function loadRandomTerm() {
+            const randomIndex = Math.floor(Math.random() * nobodyIsPerfectTerms.length);
+            const entry = nobodyIsPerfectTerms[randomIndex];
+            document.getElementById('questionInput').value = entry.term;
+            document.getElementById('realAnswerInput').value = entry.definition;
+            toggleClearButtons();
+            const btn = event.target;
+            btn.textContent = '✔ Geladen!';
+            setTimeout(() => btn.textContent = '🎲 Zufälligen Begriff laden', 1500);
+        }
+
+        function resetGame() {
+            if (confirm('Wirklich ALLE Spieler entfernen und komplett zurücksetzen?')) {
+                socket.emit('adminReset');
+                // clear all text inputs locally for admin immediately
+                clearAllTextInputs();
+                const answers = document.getElementById('answersList'); if (answers) answers.innerHTML = '';
+                const currentQ = document.getElementById('currentQuestionAdmin'); if (currentQ) currentQ.innerHTML = 'Noch keine Frage gesendet';
+            }
+        }
+
+        // When server (or admin) triggers a reset, clear inputs and auto-reload players
+        socket.on('adminReset', () => {
+            clearAllTextInputs();
+            const answers = document.getElementById('answersList'); if (answers) answers.innerHTML = '';
+            const currentQ = document.getElementById('currentQuestionAdmin'); if (currentQ) currentQ.innerHTML = 'Noch keine Frage gesendet';
+            if (!isHost) {
+                // automatically reload players so they reconnect without needing to confirm
+                setTimeout(() => location.reload(), 300);
+            } else {
+                // feedback for admin
+                alert('Reset gesendet und lokale Felder geleert.');
+            }
+        });
+
+        if (new URLSearchParams(window.location.search).get('admin') !== null) {
+            document.getElementById('adminView').style.display = 'block';
+            document.getElementById('playerSetup').style.display = 'none';
+            document.getElementById('playerGame').style.display = 'none';
+            socket.emit('adminConnect');
+            const resetBtn = document.getElementById('resetTopBtn');
+            if (resetBtn) { resetBtn.style.display = 'inline-block'; resetBtn.onclick = resetGame; }
+            // Auto-send edits from the two admin textboxes (debounced) while allowing further edits
+            const qEl = document.getElementById('questionInput');
+            const rEl = document.getElementById('realAnswerInput');
+            if (qEl) {
+                const sendQ = debounce(() => {
+                    const q = qEl.value.trim();
+                    // reuse existing 'sendQuestion' so players receive live updates
+                    socket.emit('sendQuestion', q);
+                }, 400);
+                qEl.addEventListener('input', sendQ);
+            }
+            if (rEl) {
+                const sendR = debounce(() => {
+                    const r = rEl.value.trim();
+                    // preview event for the server (server may ignore if not implemented)
+                    socket.emit('previewRealAnswer', r);
+                }, 500);
+                rEl.addEventListener('input', sendR);
+            }
+        }
+
+        socket.on('ping', () => {
+            socket.emit('pong');
+            clearTimeout(connectionTimeout);
+            const statusEl = document.getElementById('connectionStatusText');
+            if (statusEl) {
+                statusEl.innerHTML = '✅ Verbunden';
+                statusEl.style.color = 'lime';
+            }
+            connectionTimeout = setTimeout(() => {
+                if (statusEl) {
+                    statusEl.innerHTML = '❌ Getrennt';
+                    statusEl.style.color = 'red';
+                }
+            }, 6000);
+        });
+
+        socket.on('adminJoined', () => { isHost = true; });
+
+        function joinGame() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) return alert('Name eingeben!');
+            socket.emit('playerJoin', { playerName: name });
+        }
+
+        socket.on('joinedRoom', ({ isHost: host }) => {
+            isHost = host;
+            if (!isHost) {
+                document.getElementById('playerSetup').style.display = 'none';
+                document.getElementById('playerGame').style.display = 'block';
+                document.getElementById('waitingMessage').style.display = 'block';
+                document.getElementById('answerSection').style.display = 'none';
+            }
+        });
+
+        socket.on('updatePlayers', (players) => {
+            const listEl = document.getElementById('playersList');
+            if (players.length === 0) {
+                listEl.innerHTML = 'Keine verbunden';
+            } else {
+                listEl.innerHTML = players.map(p => `<div>• ${p}</div>`).join('');
+            }
+        });
+
+        socket.on('questionSent', (question) => {
+            if (!isHost) {
+                document.getElementById('currentQuestion').style.display = 'block';
+                document.getElementById('currentQuestion').textContent = `Begriff: ${question}`;
+                document.getElementById('waitingMessage').style.display = 'none';
+                document.getElementById('answerSection').style.display = 'block';
+                document.getElementById('answerInput').focus();
+            } else {
+                document.getElementById('currentQuestionAdmin').innerHTML = `<span style="color:yellow; font-size:32px">Aktuelle Frage: ${question}</span>`;
+            }
+        });
+
+        function sendQuestion() {
+            const qEl = document.getElementById('questionInput');
+            const q = qEl.value.trim();
+            if (q) {
+                socket.emit('sendQuestion', q);
+                // keep the input value so admin can continue editing or resend
+            }
+        }
+
+        function submitAnswer() {
+            const ans = document.getElementById('answerInput').value.trim();
+            if (ans) {
+                socket.emit('submitAnswer', ans);
+                const input = document.getElementById('answerInput');
+                input.style.borderColor = '#4CAF50';
+                input.style.boxShadow = '0 0 20px rgba(76,175,80,0.8)';
+                setTimeout(() => {
+                    input.style.borderColor = '';
+                    input.style.boxShadow = '';
+                }, 1000);
+            }
+        }
+
+        function submitReal() {
+            const real = document.getElementById('realAnswerInput').value.trim();
+            if (real) {
+                socket.emit('submitRealAnswer', real);
+                // keep the input value so admin can continue editing
+                toggleClearButtons();
+            }
+        }
+
+        function newRound() {
+            socket.emit('newRound');
+            document.getElementById('answersList').innerHTML = 'Neue Runde – gib eine neue Frage ein!';
+            document.getElementById('readBtn').style.display = 'none';
+            document.getElementById('currentQuestionAdmin').innerHTML = 'Noch keine Frage gesendet';
+            document.getElementById('submittedListAdmin').innerHTML = 'Warte auf Antworten...';
+        }
+
+        socket.on('updateSubmitted', (submitted) => {
+            const players = document.getElementById('playersList').innerText.split('\n').map(l => l.replace('• ', '').trim()).filter(p => p && p !== 'Admin');
+            const list = document.getElementById('submittedList');
+            const adminList = document.getElementById('submittedListAdmin');
+            if (players.length === 0) {
+                list.textContent = adminList.textContent = 'Warte auf Spieler...';
+                return;
+            }
+            const html = players.map(p => `${p}: ${submitted.includes(p) ? '✔️ geantwortet' : '❌ wartet'}`).join('<br>');
+            list.innerHTML = adminList.innerHTML = html;
+        });
+
+        socket.on('showAllAnswers', (answers) => {
+            currentAnswers = answers;
+            const list = document.getElementById('answersList');
+            list.innerHTML = '';
+            answers.forEach(a => {
+                const div = document.createElement('div');
+                div.className = 'answer';
+                const textSpan = document.createElement('span');
+                textSpan.textContent = `${a.letter}: ${a.text}`;
+                div.appendChild(textSpan);
+
+                const btn = document.createElement('button');
+                btn.style.marginLeft = '10px';
+                btn.title = 'Vorlesen (Gemini TTS)';
+                btn.textContent = '🔊';
+                btn.onclick = async () => {
+                    try {
+                        btn.disabled = true;
+                        btn.textContent = '⏳';
+                        const resp = await fetch('/api/tts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: a.text })
+                        });
+                        if (!resp.ok) {
+                            const err = await resp.json().catch(() => ({}));
+                            alert('TTS Fehler: ' + (err.error || resp.statusText));
+                            return;
+                        }
+                        const ab = await resp.arrayBuffer();
+                        const blob = new Blob([ab], { type: 'audio/mpeg' });
+                        const url = URL.createObjectURL(blob);
+                        const audio = new Audio(url);
+                        audio.onended = () => { URL.revokeObjectURL(url); btn.textContent = '🔊'; btn.disabled = false; };
+                        audio.play();
+                    } catch (e) {
+                        console.error('TTS play error', e);
+                        alert('TTS Fehler');
+                        btn.disabled = false; btn.textContent = '🔊';
+                    }
+                };
+                div.appendChild(btn);
+                list.appendChild(div);
+            });
+            document.getElementById('readBtn').style.display = 'block';
+        });
+
+        // Optional helper: play arbitrary text via server TTS
+        async function playTTS(text) {
+            const resp = await fetch('/api/tts', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text })
+            });
+            if (!resp.ok) throw new Error('TTS request failed');
+            const ab = await resp.arrayBuffer();
+            const blob = new Blob([ab], { type: 'audio/mpeg' });
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.onended = () => URL.revokeObjectURL(url);
+            await audio.play();
+        }
+
+        socket.on('roundEnded', () => {
+            if (!isHost) {
+                document.getElementById('currentQuestion').style.display = 'none';
+                document.getElementById('waitingMessage').style.display = 'block';
+                document.getElementById('answerSection').style.display = 'none';
+                document.getElementById('answerInput').value = '';
+                toggleClearButtons();
+            }
+        });
+
+        socket.on('error', (msg) => alert(msg));
+
+        function readAloud() {
+            speechSynthesis.cancel();
+            const voice = getBestGermanVoice();
+            currentAnswers.forEach((a, index) => {
+                const text = `${a.letter}: ${a.text}`;
+                const utter = new SpeechSynthesisUtterance(text);
+                if (voice) utter.voice = voice;
+                utter.lang = 'de-DE';
+                utter.rate = 0.85;
+                if (index < currentAnswers.length - 1) {
+                    utter.onend = () => {
+                        const pause = new SpeechSynthesisUtterance('');
+                        speechSynthesis.speak(pause);
+                    };
+                }
+                speechSynthesis.speak(utter);
+            });
+        }
+
+        function getBestGermanVoice() {
+            voices = speechSynthesis.getVoices();
+            return voices.find(v => v.lang === 'de-DE' && v.name.includes('Google')) ||
+                   voices.find(v => v.lang === 'de-DE' && v.name.includes('Microsoft')) ||
+                   voices.find(v => v.lang.startsWith('de')) ||
+                   voices[0];
+        }
+
+        toggleClearButtons();
+    </script>
+</body>
+</html>

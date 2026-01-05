@@ -1,0 +1,59 @@
+2025-12-28T05:48:37.624Z | NiP - V156 | Server: feste Farbslots (Rot zuerst), Listen sofort & alphabetisch, Version-API + Log
+2025-12-28T05:59:25.326Z | NiP - V160 | Server-Logik aktualisiert
+2025-12-28T06:05:44.806Z | NiP - V161 | Screen-Template
+2025-12-28T06:08:37.567Z | NiP - V162 | Screen-View & Farben · Screen-Template
+2025-12-28T06:11:45.542Z | NiP - V163 | Screen-View & Farben
+2025-12-28T06:16:23.432Z | NiP - V164 | Server-Logik aktualisiert · Spiellogik & Präsentation · Screen-View & Farben
+2025-12-28T06:21:32.779Z | NiP - V165 | Code-Updates angewendet
+2025-12-28T06:24:57.772Z | NiP - V166 | Server-Logik aktualisiert · Client-Core & Versioning · Spiellogik & Präsentation
+2025-12-28T06:27:18.571Z | NiP - V167 | Client-Core & Versioning
+2025-12-28T06:31:26.831Z | NiP - V168 | Client-Core & Versioning
+2025-12-28T06:33:57.550Z | NiP - V169 | Client-Core & Versioning
+2025-12-28T06:36:18.152Z | NiP - V170 | Client-Core & Versioning
+2025-12-28T06:38:48.471Z | NiP - V171 | Server-Logik aktualisiert · Screen-View & Farben
+2025-12-28T06:42:24.338Z | NiP - V172 | Server-Logik aktualisiert · Spiellogik & Präsentation · Screen-View & Farben
+2025-12-28T07:27:58.067Z | NiP - V173 | Server-Logik aktualisiert · Spiellogik & Präsentation · HTML-Template
+2025-12-28T07:39:46.983Z | NiP - V174 | Server-Logik aktualisiert · Spiellogik & Präsentation · HTML-Template
+2025-12-28T07:54:37.723Z | NiP - V175 | Spiellogik & Präsentation
+2025-12-28T07:55:38.901Z | NiP - V176 | Code-Updates angewendet
+2025-12-28T08:14:17.947Z | NiP - V177 | Spiellogik & Präsentation · HTML-Template
+2025-12-28T08:16:57.441Z | NiP - V178 | Admin-UI & Bot-Management
+2025-12-28T08:19:33.596Z | NiP - V179 | Admin-UI & Bot-Management · Spiellogik & Präsentation · HTML-Template
+2025-12-28T08:31:05.867Z | NiP - V180 | Admin-UI & Bot-Management · Spiellogik & Präsentation
+2025-12-28T08:37:31.801Z | NiP - V181 | Code-Updates angewendet
+2025-12-28T08:50:22.673Z | NiP - V182 | Server-Logik aktualisiert · Bootstrap-Wiring verbessert · Spiellogik & Präsentation · HTML-Template
+2025-12-28T09:05:22.317Z | NiP - V183 | Spiellogik & Präsentation · HTML-Template
+2025-12-28T09:20:58.125Z | NiP - V184 | Spiellogik & Präsentation · HTML-Template
+2025-12-28T09:23:15.532Z | NiP - V185 | Spiellogik & Präsentation
+2025-12-28T09:51:47.947Z | NiP - V186 | Bootstrap-Wiring verbessert · Admin-UI & Bot-Management · Spiellogik & Präsentation · HTML-Template
+2025-12-28T09:54:08.688Z | NiP - V187 | Code-Updates angewendet
+2025-12-28T09:56:43.620Z | NiP - V188 | Code-Updates angewendet
+2025-12-28T09:59:55.424Z | NiP - V189 | Admin-UI & Bot-Management · Spiellogik & Präsentation · HTML-Template
+2025-12-28T10:12:54.779Z | NiP - V190 | Bootstrap-Wiring verbessert · Spiellogik & Präsentation · HTML-Template
+2025-12-28T10:21:22.903Z | NiP - V191 | Bootstrap-Wiring verbessert
+2025-12-28T10:27:34.883Z | NiP - V192 | Bootstrap-Wiring verbessert · Spiellogik & Präsentation · HTML-Template
+2025-12-28T16:27:59.845Z | NiP - V193 | Server-Logik aktualisiert · Spiellogik & Präsentation
+2025-12-28T16:40:07.157Z | NiP - V194 | Server-Logik aktualisiert · Screen-Template
+2025-12-28T16:48:04.059Z | NiP - V195 | Screen-View & Farben
+2025-12-28T16:51:08.078Z | NiP - V196 | Server-Logik aktualisiert · Screen-View & Farben
+2025-12-28T16:57:59.983Z | NiP - V197 | Server-Logik aktualisiert · Screen-View & Farben
+2025-12-28T17:02:24.380Z | NiP - V198 | Server-Logik aktualisiert
+2025-12-28T17:04:49.276Z | NiP - V199 | Server-Logik aktualisiert
+2025-12-28T17:09:22.847Z | NiP - V200 | Server-Logik aktualisiert
+2025-12-28T17:12:43.783Z | NiP - V201 | Code-Updates angewendet
+2025-12-28T17:15:43.499Z | NiP - V202 | Code-Updates angewendet
+2025-12-28T17:16:55.691Z | NiP - V203 | Code-Updates angewendet
+2025-12-28T17:20:38.607Z | NiP - V204 | Code-Updates angewendet
+2025-12-28T17:28:24.804Z | NiP - V205 | Server-Logik aktualisiert · Spiellogik & Präsentation
+2025-12-28T17:40:16.640Z | NiP - V206 | Server-Logik aktualisiert · Spiellogik & Präsentation
+2025-12-28T17:42:09.577Z | NiP - V207 | Server-Logik aktualisiert
+2025-12-28T17:48:13.763Z | NiP - V208 | Server-Logik aktualisiert
+2025-12-29T03:48:44.538Z | NiP - V209 | Server-Logik aktualisiert
+2025-12-29T04:18:35.574Z | NiP - V210 | Server-Logik aktualisiert · Admin-UI & Bot-Management · HTML-Template
+2025-12-29T05:09:02.307Z | NiP - V211 | Server-Logik aktualisiert · Bootstrap-Wiring verbessert · Admin-UI & Bot-Management · Spiellogik & Präsentation · HTML-Template
+2025-12-29T18:21:16.369Z | NiP - V212 | Code-Updates angewendet
+2025-12-30T07:19:38.858Z | NiP - V213 | Code-Updates angewendet
+2025-12-30T07:32:52.218Z | NiP - V214 | Code-Updates angewendet
+2025-12-30T10:21:30.007Z | NiP - V215 | Code-Updates angewendet
+2025-12-30T11:52:32.787Z | NiP - V216 | Code-Updates angewendet
+2026-01-03T16:12:16.236Z | NiP - V217 | Code-Updates angewendet

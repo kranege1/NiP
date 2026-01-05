@@ -1,0 +1,16 @@
+node_modules/
+*.log
+.env
+.DS_Store
+grok_usage.jsonl
+event_log.json
+grok_stats.json
+term_usage.json.venv/
+.venv311/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
