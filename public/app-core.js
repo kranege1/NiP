@@ -58,6 +58,7 @@ socket.on('connect', () => {
 let APP_VERSION = 'NiP - V?';
 
 let isHost = false;
+let adminHasRealAnswer = false;
 let joined = false;
 let myPlayerName = '';
 let currentAnswers = [];
@@ -72,6 +73,20 @@ let lastPlayers = [];
 let lastSubmitted = [];
 let playerPoints = {};
 let adminSoundsEnabled = true;
+socket.on('updateSubmitted', (data) => {
+    const players = data ? (data.players || []) : [];
+    const submitted = data ? (data.submitted || []) : [];
+    lastPlayers = players;
+    lastSubmitted = submitted;
+
+    // Track adminHasRealAnswer for auto-submit logic
+    // Data format might be: { players: [], submitted: [], adminHasRealAnswer: true }
+    if (data && typeof data.adminHasRealAnswer === 'boolean') {
+        adminHasRealAnswer = data.adminHasRealAnswer;
+    }
+
+    renderPlayersActions(lastPlayers, lastSubmitted, latestVotes);
+});
 let audioCtx = null;
 let lastAdminPlayers = [];
 let lastRealIndex = null;

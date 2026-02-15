@@ -158,7 +158,29 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const startVotingBtn = document.getElementById('startVotingBtn');
     const endVotingBtn = document.getElementById('endVotingBtn');
-    if (startVotingBtn) startVotingBtn.addEventListener('click', () => emitBuffered('startVoting', {}));
+    if (startVotingBtn) {
+      startVotingBtn.addEventListener('click', () => {
+        // Auto-Submit Real Answer if not already done
+        try {
+          const realInput = document.getElementById('realAnswerInput');
+          // If valid answer is present AND (Admin hasn't submitted yet OR we want to update it)
+          // We rely on input value presence as intent to submit.
+          if (realInput && realInput.value.trim().length > 0) {
+            if (typeof adminHasRealAnswer === 'undefined' || !adminHasRealAnswer) {
+              console.log('[AutoSubmit] Submitting real answer before voting...');
+              if (typeof submitReal === 'function') {
+                submitReal();
+              } else {
+                emitBuffered('submitRealAnswer', realInput.value.trim());
+              }
+            }
+          }
+        } catch (e) { console.warn('Auto-submit failed', e); }
+
+        // Give a tiny delay for the socket emit to be queued before startVoting
+        setTimeout(() => emitBuffered('startVoting', {}), 50);
+      });
+    }
     if (endVotingBtn) endVotingBtn.addEventListener('click', () => emitBuffered('endVoting', {}));
   } catch (_) { }
 
