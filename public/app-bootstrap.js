@@ -5,14 +5,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof nobodyIsPerfectTerms === 'undefined' || nobodyIsPerfectTerms.length === 0) {
       console.warn('terms.js nicht gefunden oder leer');
     }
-  } catch (_) {}
+  } catch (_) { }
 
   try {
     document.querySelectorAll('input[type="text"], textarea').forEach((input) => {
       input.addEventListener('input', toggleClearButtons);
       input.addEventListener('focus', toggleClearButtons);
     });
-  } catch (_) {}
+  } catch (_) { }
 
   const isAdmin = new URLSearchParams(window.location.search).get('admin') !== null;
   if (isAdmin) {
@@ -26,9 +26,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const lastSeenSeq = Number(localStorage.getItem('np_last_seq') || '0') || 0;
       socket.emit('adminConnect', { lastSeenSeq });
-    } catch (_) {}
+    } catch (_) { }
 
-    setTimeout(() => { try { if (typeof setupAdminUI === 'function') setupAdminUI(); } catch (_) {} }, 100);
+    setTimeout(() => { try { if (typeof setupAdminUI === 'function') setupAdminUI(); } catch (_) { } }, 100);
 
     const adminToggle = document.getElementById('adminPanelToggle');
     if (adminToggle) adminToggle.style.display = 'inline-block';
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hide admin controls for players
     const adminToggle = document.getElementById('adminPanelToggle');
     if (adminToggle) adminToggle.style.display = 'none';
-    try { if (typeof loadState === 'function') loadState(); } catch (_) {}
+    try { if (typeof loadState === 'function') loadState(); } catch (_) { }
   }
 
   try {
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const playersPanel = document.getElementById('playersPanel');
     if (topLeft) { document.body.prepend(topLeft); topLeft.classList.remove('inline'); }
     if (playersPanel) { document.body.appendChild(playersPanel); playersPanel.classList.remove('inline'); }
-  } catch (_) {}
+  } catch (_) { }
 
   try {
     const topLeft = document.getElementById('topLeftControls');
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (adminToggle && isAdmin) actions.appendChild(adminToggle);
       if (hardReload) { hardReload.style.display = 'inline-block'; actions.appendChild(hardReload); }
     }
-  } catch (_) {}
+  } catch (_) { }
 
   try {
     const nameEl = document.getElementById('playerName');
@@ -78,10 +78,10 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleBtn.addEventListener('click', () => setObscured(!obscured));
       setObscured(false);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // Initialize voice controls early so onvoiceschanged is hooked
-  try { if (typeof initVoiceControls === 'function') initVoiceControls(); } catch (_) {}
+  try { if (typeof initVoiceControls === 'function') initVoiceControls(); } catch (_) { }
 
   // Admin: random term load wiring
   try {
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (randomLoadBtn && typeof loadRandomTerm === 'function') {
       randomLoadBtn.addEventListener('click', loadRandomTerm);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // Admin: send question to all
   try {
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => readQuestionInLang(lang));
       }
     });
-  } catch (_) {}
+  } catch (_) { }
 
   // Admin: submit real answer & shuffle
   try {
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (submitRealBtn && typeof submitReal === 'function') {
       submitRealBtn.addEventListener('click', submitReal);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // Player: submit invented answer
   try {
@@ -128,7 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (submitAnswerBtn && typeof submitAnswer === 'function') {
       submitAnswerBtn.addEventListener('click', submitAnswer);
     }
-  } catch (_) {}
+  } catch (_) { }
+
+  // Player: join game (added missing handler)
+  try {
+    const joinGameBtn = document.getElementById('joinGameBtn');
+    if (joinGameBtn && typeof joinGame === 'function') {
+      joinGameBtn.addEventListener('click', joinGame);
+    }
+  } catch (_) { }
 
   // Admin: new round
   try {
@@ -136,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newRoundBtn && typeof newRound === 'function') {
       newRoundBtn.addEventListener('click', newRound);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // Admin: read aloud (TTS)
   try {
@@ -144,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (readBtn && typeof readAloud === 'function') {
       readBtn.addEventListener('click', readAloud);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // Voting (admin only)
   try {
@@ -152,13 +160,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const endVotingBtn = document.getElementById('endVotingBtn');
     if (startVotingBtn) startVotingBtn.addEventListener('click', () => emitBuffered('startVoting', {}));
     if (endVotingBtn) endVotingBtn.addEventListener('click', () => emitBuffered('endVoting', {}));
-  } catch (_) {}
+  } catch (_) { }
 
   // Admin: present results
   try {
     const presentBtn = document.getElementById('presentBtn');
     if (presentBtn) presentBtn.addEventListener('click', () => emitBuffered('presentResults', {}));
-  } catch (_) {}
+  } catch (_) { }
 
   // Clear buttons for inputs
   try {
@@ -170,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearAnswerBtn) clearAnswerBtn.addEventListener('click', () => clearInput('answerInput'));
     if (clearQuestionBtn) clearQuestionBtn.addEventListener('click', () => clearInput('questionInput'));
     if (clearRealAnswerBtn) clearRealAnswerBtn.addEventListener('click', () => clearInput('realAnswerInput'));
-  } catch (_) {}
+  } catch (_) { }
 
   // Player Grok button
   try {
@@ -178,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (playerGrokBtn && typeof playerGrokPrompt === 'function') {
       playerGrokBtn.addEventListener('click', playerGrokPrompt);
     }
-  } catch (_) {}
+  } catch (_) { }
 
   // Hard reload
   try {
@@ -191,5 +199,5 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = `${cleaned}${delim}ts=${Date.now()}`;
       });
     }
-  } catch (_) {}
+  } catch (_) { }
 });
