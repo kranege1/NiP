@@ -251,23 +251,24 @@ function getAudioCtx() {
 }
 
 /* State management */
-async function loadState() {
+/* State management via localStorage (IP-based server state caused collisions on same WiFi) */
+function loadState() {
     try {
-        const res = await fetch('/state');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data) return;
         const nameEl = document.getElementById('playerName');
         const ansEl = document.getElementById('answerInput');
-        if (nameEl && data.playerName) {
-            nameEl.value = data.playerName;
+
+        const savedName = localStorage.getItem('np_playerName');
+        const savedAnswer = localStorage.getItem('np_lastAnswer');
+
+        if (nameEl && savedName) {
+            nameEl.value = savedName;
         }
-        if (ansEl && data.lastAnswer) {
-            ansEl.value = data.lastAnswer;
+        if (ansEl && savedAnswer) {
+            ansEl.value = savedAnswer;
         }
         toggleClearButtons();
     } catch (e) {
-        console.warn('loadState failed', e);
+        console.warn('loadState (local) failed', e);
     }
 }
 
@@ -275,20 +276,14 @@ function saveStateSync() {
     try {
         const nameEl = document.getElementById('playerName');
         const ansEl = document.getElementById('answerInput');
-        const payload = {
-            playerName: nameEl ? nameEl.value.trim() : '',
-            lastAnswer: ansEl ? ansEl.value.trim() : ''
-        };
-        const url = '/save-state';
-        const body = JSON.stringify(payload);
-        if (navigator.sendBeacon) {
-            const blob = new Blob([body], { type: 'application/json' });
-            navigator.sendBeacon(url, blob);
-        } else {
-            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => { });
-        }
+
+        if (nameEl) localStorage.setItem('np_playerName', nameEl.value.trim());
+        if (ansEl) localStorage.setItem('np_lastAnswer', ansEl.value.trim());
+
+        // Legacy: still send empty save to server if needed to clear flags, but mostly we rely on local now.
+        // We can stop sending state to server to avoid confusing it.
     } catch (e) {
-        console.warn('saveState failed', e);
+        console.warn('saveState (local) failed', e);
     }
 }
 
