@@ -1062,7 +1062,13 @@ io.on('connection', (socket) => {
         }
 
         if (rooms[roomCode].currentQuestion) {
-            socket.emit('questionSent', rooms[roomCode].currentQuestion);
+            const qData = {
+                question: rooms[roomCode].currentQuestion,
+                area: rooms[roomCode].currentQuestionArea,
+                activityPlayer: rooms[roomCode].activityPlayer ? { socketId: rooms[roomCode].activityPlayer.socketId, name: rooms[roomCode].activityPlayer.name } : null,
+                activityCandidates: [] // Candidates not needed for late joiners usually, or could store them
+            };
+            socket.emit('questionSent', qData);
         }
     }
 
