@@ -179,6 +179,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Give a tiny delay for the socket emit to be queued before startVoting
         setTimeout(() => emitBuffered('startVoting', {}), 50);
+        // QR Code Overlay logic
+        const qrBtn = document.getElementById('qrBtn');
+        const qrOverlay = document.getElementById('qrOverlay');
+        if (qrBtn && qrOverlay) {
+          qrBtn.addEventListener('click', () => {
+            qrOverlay.style.display = 'flex';
+          });
+          qrOverlay.addEventListener('click', () => {
+            qrOverlay.style.display = 'none';
+          });
+        }
+
       });
     }
     if (endVotingBtn) endVotingBtn.addEventListener('click', () => emitBuffered('endVoting', {}));

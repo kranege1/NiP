@@ -67,4 +67,11 @@
     <path d="M19.4 12.9c.04-.3.06-.61.06-.93s-.02-.63-.06-.93l2.11-1.65c.19-.15.24-.42.12-.63l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.027 7.027 0 0 0-1.6-.93l-.38-2.65A.5.5 0 0 0 12.5 2h-4a.5.5 0 0 0-.5.42l-.38 2.65c-.57.23-1.11.53-1.6.93l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.63L4.6 11.1c-.04.3-.06.61-.06.93s.02.63.06.93L2.49 14.6a.5.5 0 0 0-.12.63l2 3.46c.14.24.44.34.68.23l2.49-1c.49.4 1.03.7 1.6.93l.38 2.65c.05.28.28.48.56.48h4c.28 0 .51-.2.56-.48l.38-2.65c.57-.23 1.11-.53 1.6-.93l2.49 1c.24.11.54.01.68-.23l2-3.46a.5.5 0 0 0-.12-.63l-2.11-1.65zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
   </symbol>
 
+  <symbol id="qrcode" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="7" height="7" fill="currentColor"/>
+    <rect x="14" y="3" width="7" height="7" fill="currentColor"/>
+    <rect x="3" y="14" width="7" height="7" fill="currentColor"/>
+    <rect x="14" y="14" width="7" height="7" fill="currentColor"/>
+  </symbol>
+
 </svg>

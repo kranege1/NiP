@@ -25,6 +25,7 @@
 
     <div id="playersPanel">
         <button id="hardReloadBtn" class="reset tiny-btn" title="App neu starten"><svg class="icon" aria-hidden="true"><use href="/icons.svg#reload"></use></svg></button>
+        <button id="qrBtn" class="reset tiny-btn" title="QR-Code anzeigen" style="margin-top:4px;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#qrcode"></use></svg></button>
         <h3>Aktuelle Spieler</h3>
         <div id="playersList">Keine verbunden</div>
         <button id="resetPointsBtn" class="reset" style="display:none; margin-top:10px; width:auto;"><svg class="icon" aria-hidden="true"><use href="/icons.svg#reload"></use></svg> Punkte zurücksetzen</button>
@@ -207,6 +208,12 @@
                 <div id="adminPlayersSlot" class="admin-slot">Spielerliste wird geladen...</div>
             </div>
         </div>
+    </div>
+
+    <!-- QR Code Overlay -->
+    <div id="qrOverlay" class="qr-overlay" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center; flex-direction:column;">
+        <img src="/NiP_QR.png" alt="QR Code" style="max-width:90%; max-height:80vh; border-radius:12px; box-shadow: 0 0 30px rgba(0,255,100,0.3);">
+        <p style="color:#fff; margin-top:20px; font-size:18px;">Tippen zum Schließen</p>
     </div>
 
         <div id="appVersion" class="version-badge"></div>
