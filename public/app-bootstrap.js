@@ -51,10 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (topLeft) {
       const adminToggle = document.getElementById('adminPanelToggle');
       const hardReload = document.getElementById('hardReloadBtn');
+      const qrBtn = document.getElementById('qrBtn');
       let actions = document.getElementById('topActions');
       if (!actions) { actions = document.createElement('div'); actions.id = 'topActions'; actions.className = 'top-actions'; topLeft.appendChild(actions); }
       if (adminToggle && isAdmin) actions.appendChild(adminToggle);
       if (hardReload) { hardReload.style.display = 'inline-block'; actions.appendChild(hardReload); }
+      if (qrBtn) { qrBtn.style.display = 'inline-block'; actions.appendChild(qrBtn); }
     }
   } catch (_) { }
 
