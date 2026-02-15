@@ -6,6 +6,11 @@ function joinGame() {
     myPlayerName = name;
     socket.emit('playerJoin', { playerName: name, lastSeenSeq: lastSeq });
 
+    // iOS requires user interaction to grant Wake Lock
+    if (typeof requestWakeLock === 'function') {
+        requestWakeLock().catch(e => console.warn('Join WakeLock error:', e));
+    }
+
     // Optimistic UI: zeige sofort Warte-Bildschirm, falls Server-Response verzögert
     try {
         const setup = document.getElementById('playerSetup');
@@ -16,7 +21,7 @@ function joinGame() {
         if (waiting) waiting.style.display = 'block';
         const answerSection = document.getElementById('answerSection');
         if (answerSection) answerSection.style.display = 'none';
-    } catch (_) {}
+    } catch (_) { }
 }
 
 function isActivitySelectedInUI() {
@@ -30,32 +35,32 @@ function loadRandomTerm() {
         alert('Begriffsliste nicht geladen!');
         return;
     }
-    
+
     const areaFilter = document.getElementById('areaFilter');
     const selectedArea = areaFilter ? areaFilter.value : 'ALLE';
-    
+
     let filteredTerms = nobodyIsPerfectTerms;
     if (selectedArea && selectedArea !== 'ALLE') {
         filteredTerms = nobodyIsPerfectTerms.filter(term => term.area === selectedArea);
     }
-    
+
     if (filteredTerms.length === 0) {
         alert('Keine Begriffe in diesem Bereich verfügbar.');
         return;
     }
-    
+
     // Find the least-used terms (load-balanced selection)
     const minUsage = Math.min(...filteredTerms.map(t => window.termUsageData?.[t.term] || 0));
     const leastUsedTerms = filteredTerms.filter(t => (window.termUsageData?.[t.term] || 0) === minUsage);
-    
+
     // Randomly pick from the least-used terms
     const randomIndex = Math.floor(Math.random() * leastUsedTerms.length);
     const entry = leastUsedTerms[randomIndex];
-    
+
     document.getElementById('questionInput').value = entry.term;
     document.getElementById('realAnswerInput').value = entry.definition;
     toggleClearButtons();
-    
+
     const areaLabel = document.getElementById('questionAreaLabel');
     if (areaLabel && entry.area) {
         areaLabel.textContent = `... aus dem Bereich "${entry.area}"`;
@@ -63,10 +68,10 @@ function loadRandomTerm() {
     }
 
     syncActivityMask(entry.area);
-    
+
     // Notify server about term usage
     socket.emit('termUsed', { term: entry.term });
-    
+
     const btn = document.getElementById('randomLoadBtn') || document.querySelector('button.random');
     if (btn) {
         const icon = btn.querySelector('svg.icon');
@@ -111,7 +116,7 @@ function sendQuestion() {
         if (m && m[1]) areaName = m[1];
         // Normalize
         areaName = (areaName || '').trim();
-        
+
         const currentQuestionAreaAdmin = document.getElementById('currentQuestionAreaAdmin');
         if (currentQuestionAreaAdmin) {
             if (areaName) {
@@ -121,7 +126,7 @@ function sendQuestion() {
                 currentQuestionAreaAdmin.style.display = 'none';
             }
         }
-        
+
         emitBuffered('sendQuestion', { question: q, area: areaName });
     }
 }
@@ -152,65 +157,65 @@ function submitReal() {
 async function grokPrompt() {
     const qEl = document.getElementById('questionInput');
     const q = qEl.value.trim();
-    
+
     if (!q) {
         alert('Bitte gib zunächst eine Frage ein');
         return;
     }
-    
+
     const statusEl = document.getElementById('grokStatus');
     const btn = document.getElementById('grokBtn');
     const realAnswerInput = document.getElementById('realAnswerInput');
-    
+
     if (!statusEl || !btn) return;
-    
+
     try {
         btn.disabled = true;
         btn.textContent = '⏳ Grok denkt...';
         statusEl.style.display = 'block';
         statusEl.textContent = '⏳ Sende Prompt an Grok...';
-        
+
         const response = await fetch('/api/grok/prompt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ prompt: q, playerName: myPlayerName || 'Admin' })
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!data.success) {
             statusEl.textContent = `❌ Fehler: ${data.error}`;
             statusEl.style.color = '#ff6b6b';
             console.error('Grok error:', data.error);
             return;
         }
-        
+
         if (realAnswerInput) {
             realAnswerInput.value = data.response;
             toggleClearButtons();
-            
+
             const realWrap = document.getElementById('realAnswerWrapper');
             const toggleBtn = document.getElementById('toggleRealAnswerBtn');
             if (realWrap) realWrap.style.display = 'block';
             if (toggleBtn) toggleBtn.textContent = 'Antwort ausblenden';
-            
+
             realAnswerInput.focus();
             realAnswerInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        
+
         statusEl.style.color = '#4CAF50';
         statusEl.textContent = `✅ Erhalten! Tokens: ${data.tokensUsed} (Prompt: ${data.promptTokens}, Antwort: ${data.completionTokens})`;
-        
+
         btn.textContent = '🤖 Mit Grok';
-        
+
         setTimeout(() => {
             statusEl.style.display = 'none';
         }, 5000);
-        
+
     } catch (error) {
         console.error('Grok request failed:', error);
         statusEl.style.display = 'block';
@@ -226,7 +231,7 @@ async function playerGrokPrompt() {
         alert('Grok ist für dich nicht aktiviert. Bitte kontaktiere den Admin.');
         return;
     }
-    
+
     const ansEl = document.getElementById('answerInput');
     if (!ansEl) {
         console.error('answerInput element not found');
@@ -288,12 +293,12 @@ function newRound() {
     const activityMask = document.getElementById('activityMask'); if (activityMask) activityMask.classList.remove('visible');
     const adminQuestionWrapper = document.getElementById('currentQuestionAdminWrapper'); if (adminQuestionWrapper) adminQuestionWrapper.classList.remove('activity-mode');
     document.getElementById('submittedListAdmin').innerHTML = 'Warte auf Antworten...';
-    
+
     const realWrap = document.getElementById('realAnswerWrapper');
     const toggleBtn = document.getElementById('toggleRealAnswerBtn');
     if (realWrap) realWrap.style.display = 'none';
     if (toggleBtn) toggleBtn.textContent = 'Antwort einblenden';
-    
+
     const presentBtn = document.getElementById('presentBtn');
     if (presentBtn) presentBtn.style.display = 'none';
 }
@@ -337,7 +342,7 @@ socket.on('questionSent', (data) => {
     answeredSoundPlayed = false;
     votedSoundPlayed = false;
     latestVotes = {};
-    
+
     if (!isHost) {
         if (isActivityArea) {
             const isActivityPlayer = activityPlayer.socketId === socket.id;
@@ -355,7 +360,7 @@ socket.on('questionSent', (data) => {
             document.getElementById('currentQuestion').style.display = 'block';
             document.getElementById('currentQuestion').textContent = `Begriff: ${question}`;
         }
-        
+
         const areaElement = document.getElementById('currentQuestionArea');
         if (areaElement) {
             if (area) {
@@ -365,14 +370,14 @@ socket.on('questionSent', (data) => {
                 areaElement.style.display = 'none';
             }
         }
-        
+
         document.getElementById('waitingMessage').style.display = 'none';
         document.getElementById('answerSection').style.display = 'block';
         document.getElementById('answerInput').focus();
         updateGrokButtonVisibility();
     } else {
         document.getElementById('currentQuestionAdmin').innerHTML = `<span style="color:yellow; font-size:32px"><br>${effectiveQuestion}</span>`;
-        
+
         const currentQuestionAreaAdmin = document.getElementById('currentQuestionAreaAdmin');
         if (currentQuestionAreaAdmin) {
             if (area) {
@@ -463,9 +468,9 @@ function getBestGermanVoice() {
     voices = speechSynthesis.getVoices();
     // Immer deutsche Stimme verwenden, Benutzereinstellung ignorieren
     return voices.find(v => v.lang === 'de-DE' && v.name.includes('Google')) ||
-           voices.find(v => v.lang === 'de-DE' && v.name.includes('Microsoft')) ||
-           voices.find(v => v.lang.startsWith('de')) ||
-           voices[0];
+        voices.find(v => v.lang === 'de-DE' && v.name.includes('Microsoft')) ||
+        voices.find(v => v.lang.startsWith('de')) ||
+        voices[0];
 }
 
 // Pick a suitable voice for a given BCP-47 language code (strict matching)
@@ -479,8 +484,8 @@ function getBestVoiceForLang(langCode) {
 
     // Exact match, prefer Google/Microsoft
     let cand = normalized.find(o => o.lang === target && o.v.name.includes('Google'))
-            || normalized.find(o => o.lang === target && o.v.name.includes('Microsoft'))
-            || normalized.find(o => o.lang === target);
+        || normalized.find(o => o.lang === target && o.v.name.includes('Microsoft'))
+        || normalized.find(o => o.lang === target);
     if (cand) return cand.v;
 
     // Short match (e.g., it)
@@ -528,37 +533,37 @@ function populateVoices() {
     const prevURI = localStorage.getItem('preferredVoiceURI');
     const prevName = localStorage.getItem('preferredVoiceName');
     const selectedLang = langSel ? langSel.value : '';
-    
+
     // Sortiere: German > English > Rest alphabetisch, innerhalb jeder Gruppe nach Name
     list = list.sort((a, b) => {
         const aLang = a.lang || '';
         const bLang = b.lang || '';
         const aName = (a.name || '').replace('Microsoft ', '');
         const bName = (b.name || '').replace('Microsoft ', '');
-        
+
         // German first
         if (aLang.startsWith('de') && !bLang.startsWith('de')) return -1;
         if (!aLang.startsWith('de') && bLang.startsWith('de')) return 1;
-        
+
         // English second
         if (aLang.startsWith('en') && !bLang.startsWith('en')) return -1;
         if (!aLang.startsWith('en') && bLang.startsWith('en')) return 1;
-        
+
         // Innerhalb gleicher Sprachgruppen: nach Name sortieren
         if (aLang === bLang) {
             return aName.localeCompare(bName);
         }
-        
+
         // Rest alphabetisch nach Sprache
         return aLang.localeCompare(bLang);
     });
-    
+
     // Filtere nach ausgewählter Sprache
     let filteredList = list;
     if (selectedLang) {
         filteredList = list.filter(v => (v.lang || '').startsWith(selectedLang));
     }
-    
+
     sel.innerHTML = '';
     filteredList.forEach(v => {
         const opt = document.createElement('option');
@@ -575,57 +580,57 @@ function populateVoices() {
         opt.textContent = 'Keine Browser-Stimmen verfügbar (ggf. https oder Interaction nötig)';
         sel.appendChild(opt);
     }
-    
-        // Update availability state for compact language-specific question read buttons
-        function updateLanguageButtonsAvailability() {
-            try {
-                const voices = (typeof speechSynthesis !== 'undefined') ? speechSynthesis.getVoices() : [];
-                const map = [
-                    ['readQuestionDeBtn', 'de-DE', 'DE'],
-                    ['readQuestionEnBtn', 'en-US', 'EN'],
-                    ['readQuestionLtBtn', 'lt-LT', 'LT'],
-                    ['readQuestionElBtn', 'el-GR', 'EL'],
-                    ['readQuestionHuBtn', 'hu-HU', 'HU'],
-                    ['readQuestionJaBtn', 'ja-JP', 'JA'],
-                ];
-                const available = [];
-                const unavailable = [];
-                map.forEach(([id, lang, short]) => {
-                    const btn = document.getElementById(id);
-                    if (!btn) return;
-                    const voice = getBestVoiceForLang(lang);
-                    const has = !!voice;
-                    btn.disabled = !has;
-                    btn.style.opacity = has ? '1' : '0.6';
-                    btn.title = has ? '' : 'Keine passende Browser-Stimme gefunden';
-                    if (has) available.push(short); else unavailable.push(short);
-                });
-                const status = document.getElementById('readQuestionStatus');
-                if (status) {
-                    if (!voices || voices.length === 0) {
-                        status.textContent = 'Keine Browser-Stimmen geladen – Interaktion oder https nötig.';
-                    } else {
-                        const av = available.length ? `Verfügbar: ${available.join(', ')}` : 'Verfügbar: –';
-                        const un = unavailable.length ? `Nicht verfügbar: ${unavailable.join(', ')}` : '';
-                        status.textContent = [av, un].filter(Boolean).join(' | ');
-                    }
+
+    // Update availability state for compact language-specific question read buttons
+    function updateLanguageButtonsAvailability() {
+        try {
+            const voices = (typeof speechSynthesis !== 'undefined') ? speechSynthesis.getVoices() : [];
+            const map = [
+                ['readQuestionDeBtn', 'de-DE', 'DE'],
+                ['readQuestionEnBtn', 'en-US', 'EN'],
+                ['readQuestionLtBtn', 'lt-LT', 'LT'],
+                ['readQuestionElBtn', 'el-GR', 'EL'],
+                ['readQuestionHuBtn', 'hu-HU', 'HU'],
+                ['readQuestionJaBtn', 'ja-JP', 'JA'],
+            ];
+            const available = [];
+            const unavailable = [];
+            map.forEach(([id, lang, short]) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                const voice = getBestVoiceForLang(lang);
+                const has = !!voice;
+                btn.disabled = !has;
+                btn.style.opacity = has ? '1' : '0.6';
+                btn.title = has ? '' : 'Keine passende Browser-Stimme gefunden';
+                if (has) available.push(short); else unavailable.push(short);
+            });
+            const status = document.getElementById('readQuestionStatus');
+            if (status) {
+                if (!voices || voices.length === 0) {
+                    status.textContent = 'Keine Browser-Stimmen geladen – Interaktion oder https nötig.';
+                } else {
+                    const av = available.length ? `Verfügbar: ${available.join(', ')}` : 'Verfügbar: –';
+                    const un = unavailable.length ? `Nicht verfügbar: ${unavailable.join(', ')}` : '';
+                    status.textContent = [av, un].filter(Boolean).join(' | ');
                 }
-            } catch (_) {}
-        }
+            }
+        } catch (_) { }
+    }
 }
 
 function populateLanguages() {
     const langSel = document.getElementById('languageSelect');
     if (!langSel) return;
     const list = speechSynthesis.getVoices() || [];
-    
+
     // Extrahiere alle eindeutigen Sprachcodes (z.B. 'de', 'en', 'fr')
     const langSet = new Set();
     list.forEach(v => {
         const lang = (v.lang || '').substring(0, 2);
         if (lang) langSet.add(lang);
     });
-    
+
     let languages = Array.from(langSet).sort();
     // Fallback, falls der Browser noch keine Voices liefert
     if (languages.length === 0) {
@@ -668,21 +673,21 @@ function populateLanguages() {
             const dn = new Intl.DisplayNames(['de', 'en'], { type: 'language' });
             const disp = dn.of(lang);
             if (disp) return disp;
-        } catch (_) {}
+        } catch (_) { }
         return lang.toUpperCase();
     }
-    
+
     // Behalte nur "Alle Sprachen" Option
     const selected = langSel.value;
     langSel.innerHTML = '<option value="">Alle Sprachen</option>';
-    
+
     languages.forEach(lang => {
         const opt = document.createElement('option');
         opt.value = lang;
         opt.textContent = labelForLang(lang);
         langSel.appendChild(opt);
     });
-    
+
     langSel.value = selected;
 }
 
@@ -703,7 +708,7 @@ function initVoiceControls() {
 
     populateLanguages();
     populateVoices();
-        try { updateLanguageButtonsAvailability(); } catch (_) {}
+    try { updateLanguageButtonsAvailability(); } catch (_) { }
 
     // Some browsers deliver voices asynchronously; retry until they arrive (up to ~12s)
     let voiceTries = 0;
@@ -712,7 +717,7 @@ function initVoiceControls() {
         if (voices && voices.length) {
             populateLanguages();
             populateVoices();
-                try { updateLanguageButtonsAvailability(); } catch (_) {}
+            try { updateLanguageButtonsAvailability(); } catch (_) { }
             return;
         }
         if (voiceTries < 40) { // 40 * 300ms ≈ 12s
@@ -725,7 +730,7 @@ function initVoiceControls() {
         speechSynthesis.onvoiceschanged = () => {
             populateLanguages();
             populateVoices();
-                try { updateLanguageButtonsAvailability(); } catch (_) {}
+            try { updateLanguageButtonsAvailability(); } catch (_) { }
         };
         // Kick off retries in case onvoiceschanged never fires
         retryPopulateVoices();
@@ -754,7 +759,7 @@ function initVoiceControls() {
             utter.lang = 'de-DE';
             speechSynthesis.cancel();
             speechSynthesis.speak(utter);
-        } catch(e) {
+        } catch (e) {
             console.warn('test voice failed', e);
         }
     });
@@ -837,7 +842,7 @@ function readAloudWithBrowserTTS() {
     if (currentQuestionText && currentQuestionText.trim()) {
         const areaLabel = document.getElementById('questionAreaLabel');
         const areaText = (areaLabel && areaLabel.textContent && areaLabel.textContent.trim()) ? areaLabel.textContent.trim() : '';
-        
+
         const questionWithArea = areaText ? `Begriff: ${currentQuestionText}, ${areaText}` : `Begriff: ${currentQuestionText}`;
         const qUtter = new SpeechSynthesisUtterance(questionWithArea);
         if (voice) qUtter.voice = voice;
@@ -870,7 +875,7 @@ socket.on('votingStarted', ({ lettered, playerNames }) => {
         votedSoundPlayed = false;
         return;
     }
-    
+
     const votingSection = document.getElementById('votingSection');
     const votingOptions = document.getElementById('votingOptions');
     if (!votingSection || !votingOptions) return;
@@ -880,20 +885,20 @@ socket.on('votingStarted', ({ lettered, playerNames }) => {
         if (option.submitterName === myPlayerName) {
             return;
         }
-        
+
         const button = document.createElement('button');
         button.className = 'voting-option';
         button.style.width = '85%';
         button.style.maxWidth = '600px';
         button.textContent = `${option.letter}: ${option.text}`;
-        
+
         button.addEventListener('click', () => {
             emitBuffered('submitVote', option.letter);
             votingSection.style.display = 'none';
             document.getElementById('waitingMessage').style.display = 'block';
             document.getElementById('waitingMessage').textContent = 'Deine Stimme wurde abgegeben. Warte auf die Ergebnisse...';
         });
-        
+
         votingOptions.appendChild(button);
     });
 
@@ -937,7 +942,7 @@ socket.on('votingUpdate', (payload) => {
 socket.on('votingEnded', () => {
     const votingSection = document.getElementById('votingSection');
     if (votingSection) votingSection.style.display = 'none';
-    
+
     if (isHost) {
         const startBtn = document.getElementById('startVotingBtn');
         const endBtn = document.getElementById('endVotingBtn');
