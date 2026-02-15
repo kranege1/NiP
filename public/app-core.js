@@ -1,76 +1,5 @@
-/* Server auto-discovery for resilient local network connections */
-async function discoverServerIP() {
-    // Try cached IP first
-    const cachedIP = localStorage.getItem('np_server_ip');
-    if (cachedIP) {
-        try {
-            const res = await fetch(`http://${cachedIP}:3000/socket.io/socket.io.js`, { timeout: 500 });
-            if (res.ok) {
-                console.log('[Discovery] Using cached IP:', cachedIP);
-                return cachedIP;
-            }
-        } catch (e) {
-            console.log('[Discovery] Cached IP failed, scanning...');
-        }
-    }
-
-    // Determine local network prefix (e.g., 192.168.1 from 192.168.1.50)
-    const clientIP = new URLSearchParams(window.location.search).get('serverIP') || window.location.hostname;
-    let prefix = '';
-    if (clientIP.match(/^\d+\.\d+\.\d+\.\d+$/)) {
-        const parts = clientIP.split('.');
-        prefix = parts.slice(0, 3).join('.');
-    } else {
-        // Fallback: assume 192.168.1
-        prefix = '192.168.1';
-    }
-
-    // Scan last octet (1-254) in parallel, with early exit
-    const port = 3000;
-    const timeout = 500;
-    const candidates = [];
-    
-    for (let i = 1; i <= 254; i++) {
-        candidates.push(
-            new Promise(resolve => {
-                const ip = `${prefix}.${i}`;
-                const controller = new AbortController();
-                const timer = setTimeout(() => controller.abort(), timeout);
-                
-                fetch(`http://${ip}:${port}/socket.io/socket.io.js`, { 
-                    signal: controller.signal,
-                    mode: 'no-cors'
-                })
-                    .then(() => {
-                        clearTimeout(timer);
-                        console.log('[Discovery] Found server at:', ip);
-                        resolve(ip);
-                    })
-                    .catch(() => {
-                        clearTimeout(timer);
-                        resolve(null);
-                    });
-            })
-        );
-    }
-
-    // Find first responding IP
-    const results = await Promise.all(candidates);
-    const foundIP = results.find(ip => ip !== null);
-    
-    if (foundIP) {
-        localStorage.setItem('np_server_ip', foundIP);
-        console.log('[Discovery] Stored server IP:', foundIP);
-        return foundIP;
-    }
-
-    // Fallback to localhost
-    console.warn('[Discovery] No server found, using localhost');
-    return 'localhost';
-}
-
-// Socket will be initialized synchronously with fallback to localhost
-// Discovery happens in background and updates socket URL on next reconnect
+// Socket initialization
+// Discovery logic removed for production stability
 let socket = io(undefined, {
     reconnection: true,
     reconnectionDelay: 1000,
@@ -78,28 +7,51 @@ let socket = io(undefined, {
     reconnectionAttempts: Infinity
 });
 
-// Attempt IP discovery in background for future reconnects
-(async () => {
-    const discoveredIP = await discoverServerIP();
-    if (discoveredIP && discoveredIP !== 'localhost') {
-        console.log('[Discovery] Will use IP on next reconnect:', discoveredIP);
-        // Store for next reconnect
-        localStorage.setItem('np_server_ip', discoveredIP);
-    }
-})();
+// Wake Lock Reference
+let wakeLock = null;
 
-// Auto-refresh when coming back online after a disconnect
-let _wasOffline = false;
-socket.on('disconnect', () => {
-    console.warn('[APP] Socket disconnected – will refresh on reconnect');
-    _wasOffline = true;
-});
-socket.on('connect', () => {
-    if (_wasOffline) {
-        console.log('[APP] Reconnected – refreshing page');
-        _wasOffline = false;
-        try { location.reload(); } catch (e) { /* ignore */ }
+// Function to request Wake Lock
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('[APP] Wake Lock active');
+        }
+    } catch (err) {
+        console.warn('[APP] Wake Lock failed:', err);
     }
+}
+
+// Re-request lock when visibility changes (locks are released on visibility change)
+document.addEventListener('visibilitychange', async () => {
+    if (wakeLock !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+    }
+});
+
+// Improved Connect/Disconnect Handling
+socket.on('disconnect', (reason) => {
+    console.warn('[APP] Socket disconnected:', reason);
+    joined = false;
+    
+    // Update visual status
+    if (connectionTimeout) clearTimeout(connectionTimeout);
+    const statusEl = document.getElementById('connectionStatusText');
+    if (statusEl) { 
+        statusEl.innerHTML = '⌛ Verbindung verloren...'; 
+        statusEl.style.color = '#ff9800'; // Orange
+    }
+});
+
+socket.on('connect', () => {
+    console.log('[APP] Connected');
+    flushOutbox();
+    
+    // Soft Reconnect: Just Auto-Join, do NOT reload page
+    attemptAutoJoin();
+    
+    // Request Wake Lock on connection
+    requestWakeLock();
 });
 
 /* Global state variables */

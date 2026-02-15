@@ -138,7 +138,10 @@ const APP_VERSION = loadAndIncrementVersion();
 const app = express();
 app.use(express.json());
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+    pingTimeout: 20000,
+    pingInterval: 25000
+});
 
 // --- Event log for replay (1h retention) ---
 const EVENT_LOG_FILE = path.join(__dirname, 'event_log.json');
@@ -306,11 +309,11 @@ app.use((req, res, next) => {
 // Grok API endpoints
 app.post('/api/grok/set-key', (req, res) => {
     const apiKey = (req.body.api_key || '').trim();
-    
+
     if (!apiKey) {
         return res.status(400).json({ success: false, error: 'API key erforderlich' });
     }
-    
+
     grok.setApiKey(apiKey);
     res.json({ success: true, message: 'Grok API key gesetzt' });
 });
@@ -322,18 +325,18 @@ app.get('/api/grok/stats', (req, res) => {
 app.post('/api/grok/prompt', async (req, res) => {
     const prompt = (req.body.prompt || '').trim();
     const actorName = (req.body.playerName || req.body.name || 'Admin').toString();
-    
+
     if (!prompt) {
         return res.status(400).json({ success: false, error: 'Prompt erforderlich' });
     }
-    
+
     if (!grok.isConfigured()) {
         return res.status(401).json({ success: false, error: 'Grok API key nicht konfiguriert' });
     }
-    
+
     // Generate response
     const result = await grok.generateResponse(prompt);
-    
+
     if (result.success) {
         // Log token usage
         log(`[GROK] Prompt erfolgreich → Tokens: ${result.tokensUsed} ` +
@@ -352,7 +355,7 @@ app.post('/api/grok/prompt', async (req, res) => {
     } else {
         log(`[GROK] Fehler: ${result.error}`);
     }
-    
+
     res.json(result);
 });
 
@@ -372,7 +375,7 @@ function shuffleArray(array) {
 
 // Simple deterministic color palette picker by name
 // Fixed order palette for up to 10 players; first gets RED
-const COLOR_PALETTE = ['#f44336','#e91e63','#9c27b0','#3f51b5','#03a9f4','#009688','#8bc34a','#ff9800','#607d8b','#9e847bff'];
+const COLOR_PALETTE = ['#f44336', '#e91e63', '#9c27b0', '#3f51b5', '#03a9f4', '#009688', '#8bc34a', '#ff9800', '#607d8b', '#9e847bff'];
 const PLAYER_COLORS_FILE = path.join(__dirname, 'player_colors.json');
 let playerColors = {};
 
@@ -553,7 +556,7 @@ io.on('connection', (socket) => {
     if (!playerColors || Object.keys(playerColors).length === 0) {
         try { _loadPlayerColors(); } catch (e) { /* ignore */ }
     }
-    
+
     // Send term usage data to newly connected client
     socket.emit('termUsageUpdate', termUsage);
 
@@ -574,15 +577,15 @@ io.on('connection', (socket) => {
                 const adminList = sortPlayersList(Object.keys(room.players)
                     .filter(id => id !== room.host)  // Exclude the host/admin
                     .map(id => {
-                    const p = room.players[id];
-                    const ipRaw = p.ip || 'unknown';
-                    let ip = ipRaw;
-                    if (typeof ip === 'string' && ip.startsWith('::ffff:')) ip = ip.split('::ffff:').pop();
-                    const m = ('' + ip).match(/(?:\d+\.\d+\.\d+\.)?(\d+)$/);
-                    const last = m ? m[1] : ip;
-                    const suffix = p.offline ? ' (offline)' : '';
-                    return { id, name: p.name + suffix, ipLastOctet: last, grokEnabled: !!p.grokEnabled, color: p.color || pickColorForName(p.name), isBot: !!p.isBot };
-                }));
+                        const p = room.players[id];
+                        const ipRaw = p.ip || 'unknown';
+                        let ip = ipRaw;
+                        if (typeof ip === 'string' && ip.startsWith('::ffff:')) ip = ip.split('::ffff:').pop();
+                        const m = ('' + ip).match(/(?:\d+\.\d+\.\d+\.)?(\d+)$/);
+                        const last = m ? m[1] : ip;
+                        const suffix = p.offline ? ' (offline)' : '';
+                        return { id, name: p.name + suffix, ipLastOctet: last, grokEnabled: !!p.grokEnabled, color: p.color || pickColorForName(p.name), isBot: !!p.isBot };
+                    }));
                 hostSocket.emit('updatePlayersAdmin', adminList);
             }
         }
@@ -594,173 +597,173 @@ io.on('connection', (socket) => {
         return (found && found.color) ? found.color : pickColorForName(name);
     }
 
-        function emitVotingUpdate(roomCode) {
-            const room = rooms[roomCode];
-            if (!room) return;
-            const votes = room.votes || {};
-            const players = currentPlayersExcludingHost(roomCode);
-            emitWithSeqToRoom(roomCode, 'votingUpdate', { votes, playerNames: players.map(p => p.name), players });
-        }
+    function emitVotingUpdate(roomCode) {
+        const room = rooms[roomCode];
+        if (!room) return;
+        const votes = room.votes || {};
+        const players = currentPlayersExcludingHost(roomCode);
+        emitWithSeqToRoom(roomCode, 'votingUpdate', { votes, playerNames: players.map(p => p.name), players });
+    }
 
-        // helper: return array of current player names excluding the admin/host
-        function currentPlayersExcludingHost(roomCode) {
-            const room = rooms[roomCode];
-            if (!room) return [];
-            const list = Object.keys(room.players).filter(id => id !== room.host).map(id => {
+    // helper: return array of current player names excluding the admin/host
+    function currentPlayersExcludingHost(roomCode) {
+        const room = rooms[roomCode];
+        if (!room) return [];
+        const list = Object.keys(room.players).filter(id => id !== room.host).map(id => {
+            const p = room.players[id];
+            return (p && p.name) ? { name: p.name, color: p.color || pickColorForName(p.name), isBot: !!p.isBot } : null;
+        }).filter(Boolean);
+        return sortPlayersList(list);
+    }
+
+    // helper: return array of player items { name, offline } excluding the admin/host
+    function currentPlayerItemsExcludingHost(roomCode) {
+        const room = rooms[roomCode];
+        if (!room) return [];
+        const list = Object.keys(room.players)
+            .filter(id => id !== room.host)
+            .map(id => {
                 const p = room.players[id];
-                return (p && p.name) ? { name: p.name, color: p.color || pickColorForName(p.name), isBot: !!p.isBot } : null;
-            }).filter(Boolean);
-            return sortPlayersList(list);
-        }
+                return { name: p.name, offline: !!p.offline, color: p.color || pickColorForName(p.name), isBot: !!p.isBot };
+            });
+        return sortPlayersList(list);
+    }
 
-        // helper: return array of player items { name, offline } excluding the admin/host
-        function currentPlayerItemsExcludingHost(roomCode) {
-            const room = rooms[roomCode];
-            if (!room) return [];
-            const list = Object.keys(room.players)
-                .filter(id => id !== room.host)
-                .map(id => {
-                    const p = room.players[id];
-                    return { name: p.name, offline: !!p.offline, color: p.color || pickColorForName(p.name), isBot: !!p.isBot };
-                });
-            return sortPlayersList(list);
-        }
+    function broadcastUpdateSubmitted(roomCode) {
+        const playersNow = currentPlayersExcludingHost(roomCode);
+        const playerItemsNow = currentPlayerItemsExcludingHost(roomCode);
+        const adminHasReal = !!rooms[roomCode].realAnswer;
+        emitWithSeqToRoom(roomCode, 'updateSubmitted', { players: playerItemsNow, submitted: rooms[roomCode].submitted || [], adminHasRealAnswer: adminHasReal });
+    }
 
-        function broadcastUpdateSubmitted(roomCode) {
-            const playersNow = currentPlayersExcludingHost(roomCode);
-            const playerItemsNow = currentPlayerItemsExcludingHost(roomCode);
-            const adminHasReal = !!rooms[roomCode].realAnswer;
-            emitWithSeqToRoom(roomCode, 'updateSubmitted', { players: playerItemsNow, submitted: rooms[roomCode].submitted || [], adminHasRealAnswer: adminHasReal });
-        }
+    // -------------------- Bot-Manager Helpers (inside connection so emitPlayerLists is available) --------------------
+    function ensureBots(roomCode, desiredCount) {
+        const room = rooms[roomCode];
+        if (!room) return;
+        // Maximal so viele Bots, dass Gesamtspielerzahl <= MAX_PLAYERS
+        const roomPlayers = Object.values(room.players || {}).length;
+        const realPlayers = Object.values(room.players || {}).filter(p => !p.isBot).length;
+        const maxBotsAllowed = Math.max(0, MAX_PLAYERS - realPlayers);
+        desiredCount = Math.max(0, Math.min(maxBotsAllowed, Number(desiredCount) || 0));
 
-        // -------------------- Bot-Manager Helpers (inside connection so emitPlayerLists is available) --------------------
-        function ensureBots(roomCode, desiredCount) {
-            const room = rooms[roomCode];
-            if (!room) return;
-            // Maximal so viele Bots, dass Gesamtspielerzahl <= MAX_PLAYERS
-            const roomPlayers = Object.values(room.players || {}).length;
-            const realPlayers = Object.values(room.players || {}).filter(p => !p.isBot).length;
-            const maxBotsAllowed = Math.max(0, MAX_PLAYERS - realPlayers);
-            desiredCount = Math.max(0, Math.min(maxBotsAllowed, Number(desiredCount) || 0));
+        // gather existing bot numbers
+        const existingBots = Object.entries(room.players)
+            .filter(([id, p]) => p && p.isBot)
+            .map(([id, p]) => ({ id, name: p.name }));
 
-            // gather existing bot numbers
-            const existingBots = Object.entries(room.players)
-                .filter(([id, p]) => p && p.isBot)
-                .map(([id, p]) => ({ id, name: p.name }));
-
-            // Remove extra bots
-            while (existingBots.length > desiredCount) {
-                const rem = existingBots.pop();
-                delete room.players[rem.id];
-                // cleanup answers/submitted/votes
-                room.answers = (room.answers || []).filter(a => a.name !== rem.name);
-                room.submitted = (room.submitted || []).filter(n => n !== rem.name);
-                if (room.votes) {
-                    Object.keys(room.votes).forEach(k => { if (k === rem.name) delete room.votes[k]; });
-                }
+        // Remove extra bots
+        while (existingBots.length > desiredCount) {
+            const rem = existingBots.pop();
+            delete room.players[rem.id];
+            // cleanup answers/submitted/votes
+            room.answers = (room.answers || []).filter(a => a.name !== rem.name);
+            room.submitted = (room.submitted || []).filter(n => n !== rem.name);
+            if (room.votes) {
+                Object.keys(room.votes).forEach(k => { if (k === rem.name) delete room.votes[k]; });
             }
-
-            // Add missing bots, aber nie über MAX_PLAYERS hinaus
-            for (let i = existingBots.length + 1; i <= desiredCount; i++) {
-                if (Object.values(room.players).length >= MAX_PLAYERS) break;
-                const botId = `bot:${i}`;
-                const botName = BOT_NAMES[(i - 1) % BOT_NAMES.length] || `#Bot${i}`;
-                if (Object.values(room.players).find(p => p && p.name === botName)) continue;
-                const botColor = pickUniqueColor(room, botName, null);
-                room.players[botId] = { name: botName, ip: '127.0.0.1', offline: false, isBot: true, grokEnabled: true, color: botColor };
-            }
-
-            // Refresh any derived structures
-            emitPlayerLists(roomCode);
-            broadcastUpdateSubmitted(roomCode);
         }
 
-        async function serverBotSubmit(roomCode, botId, text) {
-            const room = rooms[roomCode];
-            if (!room) return;
-            const bot = room.players[botId];
-            if (!bot) return;
-            const botName = bot.name;
+        // Add missing bots, aber nie über MAX_PLAYERS hinaus
+        for (let i = existingBots.length + 1; i <= desiredCount; i++) {
+            if (Object.values(room.players).length >= MAX_PLAYERS) break;
+            const botId = `bot:${i}`;
+            const botName = BOT_NAMES[(i - 1) % BOT_NAMES.length] || `#Bot${i}`;
+            if (Object.values(room.players).find(p => p && p.name === botName)) continue;
+            const botColor = pickUniqueColor(room, botName, null);
+            room.players[botId] = { name: botName, ip: '127.0.0.1', offline: false, isBot: true, grokEnabled: true, color: botColor };
+        }
 
-            // Remove any previous answer by this bot
-            room.answers = (room.answers || []).filter(a => a.name !== botName);
-            room.answers.push({ name: botName, text: text });
-            if (!room.submitted.includes(botName)) room.submitted.push(botName);
+        // Refresh any derived structures
+        emitPlayerLists(roomCode);
+        broadcastUpdateSubmitted(roomCode);
+    }
 
-            // Update shuffledAnswers if not finalized
-            const playersNow = Object.keys(room.players).filter(id => id !== room.host).map(id => room.players[id].name);
-            const allAnswersIn = room.submitted.length === playersNow.length && !!room.realAnswer;
+    async function serverBotSubmit(roomCode, botId, text) {
+        const room = rooms[roomCode];
+        if (!room) return;
+        const bot = room.players[botId];
+        if (!bot) return;
+        const botName = bot.name;
 
-            if (!room.answersFinalized) {
-                let allAnswers = [...(room.answers || [])];
-                if (room.realAnswer) allAnswers.push({ name: 'Echte Definition', text: room.realAnswer });
-                room.shuffledAnswers = shuffleArray(allAnswers);
-                if (allAnswersIn) room.answersFinalized = true;
-            } else if (room.shuffledAnswers) {
-                const idx = room.shuffledAnswers.findIndex(a => a.name === botName);
-                if (idx !== -1) room.shuffledAnswers[idx].text = text;
-                else room.shuffledAnswers.push({ name: botName, text });
+        // Remove any previous answer by this bot
+        room.answers = (room.answers || []).filter(a => a.name !== botName);
+        room.answers.push({ name: botName, text: text });
+        if (!room.submitted.includes(botName)) room.submitted.push(botName);
+
+        // Update shuffledAnswers if not finalized
+        const playersNow = Object.keys(room.players).filter(id => id !== room.host).map(id => room.players[id].name);
+        const allAnswersIn = room.submitted.length === playersNow.length && !!room.realAnswer;
+
+        if (!room.answersFinalized) {
+            let allAnswers = [...(room.answers || [])];
+            if (room.realAnswer) allAnswers.push({ name: 'Echte Definition', text: room.realAnswer });
+            room.shuffledAnswers = shuffleArray(allAnswers);
+            if (allAnswersIn) room.answersFinalized = true;
+        } else if (room.shuffledAnswers) {
+            const idx = room.shuffledAnswers.findIndex(a => a.name === botName);
+            if (idx !== -1) room.shuffledAnswers[idx].text = text;
+            else room.shuffledAnswers.push({ name: botName, text });
+        }
+
+        // Notify admin and screens similar to real submit
+        if (room.host) {
+            const hostSocket = io.sockets.sockets.get(room.host);
+            if (hostSocket) {
+                let answersToShow = room.shuffledAnswers ? room.shuffledAnswers : [...room.answers];
+                if (room.realAnswer && !answersToShow.find(a => a.name === 'Echte Definition')) answersToShow.push({ name: 'Echte Definition', text: room.realAnswer });
+                const lettered = answersToShow.map((a, i) => ({ letter: String.fromCharCode(65 + i), text: a.text, name: a.name, color: colorForName(room, a.name) }));
+                hostSocket.emit('showAllAnswers', lettered);
+                try {
+                    const playersNowArr = Object.keys(room.players).filter(id => id !== room.host);
+                    if (room.submitted.length === playersNowArr.length) {
+                        emitToScreens(roomCode, 'showAllAnswers', lettered);
+                    }
+                } catch (e) { /* ignore */ }
             }
+        }
 
-            // Notify admin and screens similar to real submit
-            if (room.host) {
-                const hostSocket = io.sockets.sockets.get(room.host);
-                if (hostSocket) {
-                    let answersToShow = room.shuffledAnswers ? room.shuffledAnswers : [...room.answers];
-                    if (room.realAnswer && !answersToShow.find(a => a.name === 'Echte Definition')) answersToShow.push({ name: 'Echte Definition', text: room.realAnswer });
-                    const lettered = answersToShow.map((a, i) => ({ letter: String.fromCharCode(65 + i), text: a.text, name: a.name, color: colorForName(room, a.name) }));
-                    hostSocket.emit('showAllAnswers', lettered);
+        emitPlayerLists(roomCode);
+        broadcastUpdateSubmitted(roomCode);
+    }
+
+    function scheduleBotAnswers(roomCode) {
+        const room = rooms[roomCode];
+        if (!room) return;
+        for (const [id, p] of Object.entries(room.players)) {
+            if (!p || !p.isBot) continue;
+            if ((room.submitted || []).includes(p.name)) continue;
+            const delay = 800 + Math.floor(Math.random() * 6000);
+            setTimeout(async () => {
+                const q = room.currentQuestion || '';
+                const area = (room.currentQuestionArea || '').toLowerCase();
+                const isActivity = area.includes('activity');
+                const isSprachen = area.includes('sprachen');
+                const isRateStadt = area.includes('rate die stadt');
+                const isRateLand = area.includes('rate das land');
+                const useCannedByArea = isActivity || isSprachen || isRateStadt || isRateLand;
+                let answerText = ``;
+                let fromCanned = false;
+
+                // Activity/SPRACHEN/RATE DIE STADT/RATE DAS LAND mode: bots pull from answers.js area-specific pool; fallback to one-word list
+                if (useCannedByArea) {
                     try {
-                        const playersNowArr = Object.keys(room.players).filter(id => id !== room.host);
-                        if (room.submitted.length === playersNowArr.length) {
-                            emitToScreens(roomCode, 'showAllAnswers', lettered);
+                        let areaKey = 'ACTIVITY';
+                        if (isSprachen) areaKey = 'SPRACHEN';
+                        else if (isRateStadt) areaKey = 'RATE DIE STADT';
+                        else if (isRateLand) areaKey = 'RATE DAS LAND';
+
+                        console.log(`[DEBUG] Bot answer - area: "${room.currentQuestionArea}", areaKey: "${areaKey}", pool size: ${CANNED_ANSWERS_BY_AREA[areaKey]?.length || 0}`);
+                        const byArea = CANNED_ANSWERS_BY_AREA && CANNED_ANSWERS_BY_AREA[areaKey];
+                        if (byArea && byArea.length) {
+                            answerText = byArea[Math.floor(Math.random() * byArea.length)] || '';
+                            fromCanned = true;
                         }
                     } catch (e) { /* ignore */ }
-                }
-            }
-
-            emitPlayerLists(roomCode);
-            broadcastUpdateSubmitted(roomCode);
-        }
-
-        function scheduleBotAnswers(roomCode) {
-            const room = rooms[roomCode];
-            if (!room) return;
-            for (const [id, p] of Object.entries(room.players)) {
-                if (!p || !p.isBot) continue;
-                if ((room.submitted || []).includes(p.name)) continue;
-                const delay = 800 + Math.floor(Math.random() * 6000);
-                setTimeout(async () => {
-                    const q = room.currentQuestion || '';
-                    const area = (room.currentQuestionArea || '').toLowerCase();
-                    const isActivity = area.includes('activity');
-                    const isSprachen = area.includes('sprachen');
-                    const isRateStadt = area.includes('rate die stadt');
-                    const isRateLand = area.includes('rate das land');
-                    const useCannedByArea = isActivity || isSprachen || isRateStadt || isRateLand;
-                    let answerText = ``;
-                    let fromCanned = false;
-
-                    // Activity/SPRACHEN/RATE DIE STADT/RATE DAS LAND mode: bots pull from answers.js area-specific pool; fallback to one-word list
-                    if (useCannedByArea) {
-                        try {
-                            let areaKey = 'ACTIVITY';
-                            if (isSprachen) areaKey = 'SPRACHEN';
-                            else if (isRateStadt) areaKey = 'RATE DIE STADT';
-                            else if (isRateLand) areaKey = 'RATE DAS LAND';
-                            
-                            console.log(`[DEBUG] Bot answer - area: "${room.currentQuestionArea}", areaKey: "${areaKey}", pool size: ${CANNED_ANSWERS_BY_AREA[areaKey]?.length || 0}`);
-                            const byArea = CANNED_ANSWERS_BY_AREA && CANNED_ANSWERS_BY_AREA[areaKey];
-                            if (byArea && byArea.length) {
-                                answerText = byArea[Math.floor(Math.random() * byArea.length)] || '';
-                                fromCanned = true;
-                            }
-                        } catch (e) { /* ignore */ }
-                        if (!answerText) {
-                            const oneWordPool = ['Schwimmen','Kochlöffel','Laterne','Seil','Puzzle','Pinsel','Trommel','Segel','Kreide','Fahrrad','Kaktus','Kompass','Pfeffer','Rakete','Kiste','Mütze','Karotte','Lampe','Hobel','Ziegel'];
-                            answerText = oneWordPool[Math.floor(Math.random() * oneWordPool.length)] || 'Schwimmen';
-                        }
-                    } else {
+                    if (!answerText) {
+                        const oneWordPool = ['Schwimmen', 'Kochlöffel', 'Laterne', 'Seil', 'Puzzle', 'Pinsel', 'Trommel', 'Segel', 'Kreide', 'Fahrrad', 'Kaktus', 'Kompass', 'Pfeffer', 'Rakete', 'Kiste', 'Mütze', 'Karotte', 'Lampe', 'Hobel', 'Ziegel'];
+                        answerText = oneWordPool[Math.floor(Math.random() * oneWordPool.length)] || 'Schwimmen';
+                    }
+                } else {
                     try {
                         const grokAllowed = !!p.grokEnabled && grok.isConfigured();
                         if (grokAllowed) {
@@ -782,7 +785,7 @@ io.on('connection', (socket) => {
                             topic = String(topic);
 
                             // Build prompt: instruct Grok to invent a FALSE definition from an unrelated topic
-                                const prompt = `Du bist ${p.name}, ein ${persona}er Autor. Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE und thematisch FACHFREMDE Definition. Die Definition MUSS aus dem Themenbereich "${topic}" stammen und DARF NICHT aus dem Themenbereich der Frage kommen. Formuliere im Stil der vorhandenen Definitionen: eine knappe Nominalphrase oder sehr kurzer Satz, neutral, keine Hervorhebungen. Verwende den Begriff NICHT. Beginne nicht mit 'Begriff' oder 'der Begriff'. Antworte ohne Anmerkungen.`;
+                            const prompt = `Du bist ${p.name}, ein ${persona}er Autor. Erfinde eine KURZ (3-10 Wörter), bewusst FALSCHE und thematisch FACHFREMDE Definition. Die Definition MUSS aus dem Themenbereich "${topic}" stammen und DARF NICHT aus dem Themenbereich der Frage kommen. Formuliere im Stil der vorhandenen Definitionen: eine knappe Nominalphrase oder sehr kurzer Satz, neutral, keine Hervorhebungen. Verwende den Begriff NICHT. Beginne nicht mit 'Begriff' oder 'der Begriff'. Antworte ohne Anmerkungen.`;
 
                             // randomize temperature a bit for sampling diversity
                             const temp = 0.75 + Math.random() * 0.6; // ~0.75 - 1.35
@@ -810,101 +813,101 @@ io.on('connection', (socket) => {
                     } catch (e) {
                         console.error('Bot Grok error', e);
                     }
-                    }
-                    if (!answerText) {
-                        // fallback templates with slight randomization
-                        // fallback templates choose an unrelated topic to keep answers fachfremd
-                        const fallbackTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme'];
-                        const fbTopic = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
-                        const fallbacksNoQ = [
-                            `Eine plausible, aber irreführende Beschreibung aus dem Bereich ${fbTopic}.`,
-                            `${p.name} beschreibt dies im Kontext ${fbTopic} als eine ungewöhnliche Idee.`,
-                            `Eine knappe, irreführende Definition im Bereich ${fbTopic}.`,
-                            `Kurz: eine scheinbar logische Erklärung aus ${fbTopic}.`
-                        ];
-                        const fallbacksWithQ = [
-                            `Eine plausible, aber irreführende Beschreibung von ${q} aus dem Bereich ${fbTopic}.`,
-                            `${p.name} beschreibt ${q} im Kontext ${fbTopic} als eine ungewöhnliche Idee.`,
-                            `Eine knappe, irreführende Definition zu ${q} (aus ${fbTopic}).`,
-                            `Kurz: eine scheinbar logische Erklärung für ${q} im Bereich ${fbTopic}.`
-                        ];
+                }
+                if (!answerText) {
+                    // fallback templates with slight randomization
+                    // fallback templates choose an unrelated topic to keep answers fachfremd
+                    const fallbackTopics = ['Küche', 'Sport', 'Mode', 'Musik', 'Garten', 'Reisen', 'Gaming', 'Haustiere', 'Filme'];
+                    const fbTopic = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
+                    const fallbacksNoQ = [
+                        `Eine plausible, aber irreführende Beschreibung aus dem Bereich ${fbTopic}.`,
+                        `${p.name} beschreibt dies im Kontext ${fbTopic} als eine ungewöhnliche Idee.`,
+                        `Eine knappe, irreführende Definition im Bereich ${fbTopic}.`,
+                        `Kurz: eine scheinbar logische Erklärung aus ${fbTopic}.`
+                    ];
+                    const fallbacksWithQ = [
+                        `Eine plausible, aber irreführende Beschreibung von ${q} aus dem Bereich ${fbTopic}.`,
+                        `${p.name} beschreibt ${q} im Kontext ${fbTopic} als eine ungewöhnliche Idee.`,
+                        `Eine knappe, irreführende Definition zu ${q} (aus ${fbTopic}).`,
+                        `Kurz: eine scheinbar logische Erklärung für ${q} im Bereich ${fbTopic}.`
+                    ];
 
-                        answerText = (allowTerm ? fallbacksWithQ : fallbacksNoQ)[Math.floor(Math.random() * (allowTerm ? fallbacksWithQ.length : fallbacksNoQ.length))];
-                        if (answerText.length > 200) answerText = answerText.substr(0,200);
+                    answerText = (allowTerm ? fallbacksWithQ : fallbacksNoQ)[Math.floor(Math.random() * (allowTerm ? fallbacksWithQ.length : fallbacksNoQ.length))];
+                    if (answerText.length > 200) answerText = answerText.substr(0, 200);
+                }
+
+                // Ensure answer does not contain the exact question term unless activity/sprachen area allows it
+                if (!useCannedByArea && q && typeof answerText === 'string') {
+                    try {
+                        const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const re = new RegExp('\\b' + escapeRegExp(q) + '\\b', 'gi');
+                        if (re.test(answerText)) {
+                            // replace occurrences with a neutral phrase
+                            answerText = answerText.replace(re, 'der Begriff');
+                            // trim repeated spaces
+                            answerText = answerText.replace(/\s+/g, ' ').trim();
+                        }
+                    } catch (e) {
+                        // ignore sanitization errors
                     }
 
-                    // Ensure answer does not contain the exact question term unless activity/sprachen area allows it
-                    if (!useCannedByArea && q && typeof answerText === 'string') {
-                        try {
-                            const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                            const re = new RegExp('\\b' + escapeRegExp(q) + '\\b', 'gi');
-                            if (re.test(answerText)) {
-                                // replace occurrences with a neutral phrase
-                                answerText = answerText.replace(re, 'der Begriff');
-                                // trim repeated spaces
-                                answerText = answerText.replace(/\s+/g, ' ').trim();
-                            }
-                        } catch (e) {
-                            // ignore sanitization errors
+                    // Avoid answers beginning with "der Begriff" (or similar).
+                    try {
+                        const leadingRe = /^\s*(der|die|das)\s+begriff\b[\s,:-]*/i;
+                        if (leadingRe.test(answerText)) {
+                            const starters = ['Eine Beschreibung', 'Kurz gesagt', 'In kurzen Worten', 'Als Begriff beschrieben'];
+                            const starter = starters[Math.floor(Math.random() * starters.length)];
+                            answerText = answerText.replace(leadingRe, starter + ' ');
+                            answerText = answerText.replace(/\s+/g, ' ').trim();
                         }
-
-                        // Avoid answers beginning with "der Begriff" (or similar).
-                        try {
-                            const leadingRe = /^\s*(der|die|das)\s+begriff\b[\s,:-]*/i;
-                            if (leadingRe.test(answerText)) {
-                                const starters = ['Eine Beschreibung', 'Kurz gesagt', 'In kurzen Worten', 'Als Begriff beschrieben'];
-                                const starter = starters[Math.floor(Math.random() * starters.length)];
-                                answerText = answerText.replace(leadingRe, starter + ' ');
-                                answerText = answerText.replace(/\s+/g, ' ').trim();
-                            }
-                        } catch (e) {
-                            // ignore
-                        }
-                        // Enforce 3-10 words for Grok answers; allow canned answers fully
-                        try {
-                            const words = answerText.split(/\s+/).filter(Boolean);
-                            if (!fromCanned && words.length > 10) {
-                                answerText = words.slice(0, 10).join(' ').trim();
-                            } else if (words.length < 3) {
-                                // choose a fallback matching the allowTerm rule to guarantee length
-                                const fallbackTopics = ['Küche','Sport','Musik','Garten','Reisen'];
-                                const fb = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
-                                const shortFallback = allowTerm ? `Kurze falsche Definition aus ${fb}.` : `Kurze falsche Definition.`;
-                                answerText = shortFallback;
-                            }
-                            // ensure terminal punctuation
-                            if (!/[.!?]$/.test(answerText)) answerText += '.';
-                        } catch (e) {
-                            // ignore
-                        }
+                    } catch (e) {
+                        // ignore
                     }
-                    serverBotSubmit(roomCode, id, answerText);
-                }, delay);
-            }
+                    // Enforce 3-10 words for Grok answers; allow canned answers fully
+                    try {
+                        const words = answerText.split(/\s+/).filter(Boolean);
+                        if (!fromCanned && words.length > 10) {
+                            answerText = words.slice(0, 10).join(' ').trim();
+                        } else if (words.length < 3) {
+                            // choose a fallback matching the allowTerm rule to guarantee length
+                            const fallbackTopics = ['Küche', 'Sport', 'Musik', 'Garten', 'Reisen'];
+                            const fb = fallbackTopics[Math.floor(Math.random() * fallbackTopics.length)];
+                            const shortFallback = allowTerm ? `Kurze falsche Definition aus ${fb}.` : `Kurze falsche Definition.`;
+                            answerText = shortFallback;
+                        }
+                        // ensure terminal punctuation
+                        if (!/[.!?]$/.test(answerText)) answerText += '.';
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+                serverBotSubmit(roomCode, id, answerText);
+            }, delay);
         }
+    }
 
-        function scheduleBotVotes(roomCode) {
-            const room = rooms[roomCode];
-            if (!room) return;
-            const options = room.shuffledAnswers || [];
-            for (const [id, p] of Object.entries(room.players)) {
-                if (!p || !p.isBot) continue;
-                const botName = p.name;
-                const ownIdx = options.findIndex(o => o.name === botName);
-                const possibleIdx = options.map((o,i)=>i).filter(i => i !== ownIdx);
-                if (possibleIdx.length === 0) continue;
-                const delay = 1200 + Math.floor(Math.random() * 6000);
-                setTimeout(() => {
-                    const pickIdx = possibleIdx[Math.floor(Math.random() * possibleIdx.length)];
-                    const letter = String.fromCharCode(65 + pickIdx);
-                    room.votes = room.votes || {};
-                    room.votes[botName] = letter;
-                    emitVotingUpdate(roomCode);
-                }, delay);
-            }
+    function scheduleBotVotes(roomCode) {
+        const room = rooms[roomCode];
+        if (!room) return;
+        const options = room.shuffledAnswers || [];
+        for (const [id, p] of Object.entries(room.players)) {
+            if (!p || !p.isBot) continue;
+            const botName = p.name;
+            const ownIdx = options.findIndex(o => o.name === botName);
+            const possibleIdx = options.map((o, i) => i).filter(i => i !== ownIdx);
+            if (possibleIdx.length === 0) continue;
+            const delay = 1200 + Math.floor(Math.random() * 6000);
+            setTimeout(() => {
+                const pickIdx = possibleIdx[Math.floor(Math.random() * possibleIdx.length)];
+                const letter = String.fromCharCode(65 + pickIdx);
+                room.votes = room.votes || {};
+                room.votes[botName] = letter;
+                emitVotingUpdate(roomCode);
+            }, delay);
         }
+    }
 
-        // -------------------- End Bot-Manager Helpers --------------------
+    // -------------------- End Bot-Manager Helpers --------------------
 
     // Heartbeat alle 5 Sekunden
     setInterval(() => {
@@ -976,7 +979,7 @@ io.on('connection', (socket) => {
         }
 
         // Send current player/admin lists immediately so overlay has data
-        try { emitPlayerLists(ACTIVE_ROOM); } catch (_) {}
+        try { emitPlayerLists(ACTIVE_ROOM); } catch (_) { }
 
         replayEvents(socket, ACTIVE_ROOM, lastSeenSeq);
     });
@@ -991,7 +994,7 @@ io.on('connection', (socket) => {
             socket.emit('error', 'Der Admin hat das Spiel noch nicht geöffnet.');
             return;
         }
-        
+
         // Prüfe ob dieser Spieler bereits existiert (Reconnect)
         const existingPlayer = Object.entries(rooms[ACTIVE_ROOM].players).find(([id, p]) => p.name === playerName.trim());
         let preservedGrokEnabled = false;
@@ -1122,7 +1125,7 @@ io.on('connection', (socket) => {
             const areaLower = String(area).toLowerCase().trim();
             const isActivityArea = areaLower.includes('activity');
             log(`[SERVER] sendQuestion area="${area}", isActivity=${isActivityArea}`);
-            
+
             let activityCandidates = [];
             if (isActivityArea) {
                 const candidates = Object.keys(rooms[ACTIVE_ROOM].players)
@@ -1143,15 +1146,15 @@ io.on('connection', (socket) => {
             }
 
             // Send to all sockets in the room
-            emitWithSeqToRoom(ACTIVE_ROOM, 'questionSent', { 
-                question: question.trim(), 
+            emitWithSeqToRoom(ACTIVE_ROOM, 'questionSent', {
+                question: question.trim(),
                 area: area,
                 activityPlayer: activityPlayer ? { socketId: activityPlayer.socketId, name: activityPlayer.name } : null,
                 activityCandidates
             });
             // Let server-side bots generate answers
             try { scheduleBotAnswers(ACTIVE_ROOM); } catch (e) { console.error('scheduleBotAnswers failed', e); }
-            
+
             log(`[SERVER] emit questionSent -> "${question.trim()}" (area: ${area}, activityPlayer: ${activityPlayer ? activityPlayer.name : 'none'})`);
             const playersNow = currentPlayersExcludingHost(ACTIVE_ROOM);
             const playerItemsNow = currentPlayerItemsExcludingHost(ACTIVE_ROOM);
@@ -1159,7 +1162,7 @@ io.on('connection', (socket) => {
             emitWithSeqToRoom(ACTIVE_ROOM, 'updateSubmitted', { players: playerItemsNow, submitted: [], adminHasRealAnswer: adminHasReal });
             log(`[SERVER] emit updateSubmitted -> submitted=0 players=${playersNow.length}`);
             log(`Frage gestellt: "${question.trim()}"`);
-            
+
             // Track term usage
             if (question.trim()) {
                 incrementTermUsage(question.trim());
@@ -1198,7 +1201,7 @@ io.on('connection', (socket) => {
 
         // Neue Antwort hinzufÃ¼gen
         room.answers.push({ name: socket.playerName, text: trimmed });
-        
+
         // Als geantwortet markieren
         if (!room.submitted.includes(socket.playerName)) {
             room.submitted.push(socket.playerName);
@@ -1228,7 +1231,7 @@ io.on('connection', (socket) => {
                 allAnswers.push({ name: 'Echte Definition', text: room.realAnswer });
             }
             room.shuffledAnswers = shuffleArray(allAnswers);
-            
+
             // Wenn alle Antworten da sind, finalisiere die Reihenfolge
             if (allAnswersIn) {
                 room.answersFinalized = true;
@@ -1258,21 +1261,21 @@ io.on('connection', (socket) => {
                         answersToShow.push({ name: 'Echte Definition', text: room.realAnswer });
                     }
                 }
-                
+
                 const lettered = answersToShow.map((a, i) => ({
                     letter: String.fromCharCode(65 + i),
                     text: a.text,
                     name: a.name || a.submitterName || null
                 }));
-                    log(`[ADMIN] showAllAnswers emit: ${lettered.length} answers`);
-                    hostSocket.emit('showAllAnswers', lettered);
-                    // only show answers on screen when all players have submitted
-                    if (room.submitted.length === playersNow.length) {
-                        emitToScreens(ACTIVE_ROOM, 'showAllAnswers', lettered);
-                        log('[ADMIN] showAllAnswers emitted to host and screens (all answers in)');
-                    } else {
-                        log('[ADMIN] showAllAnswers emitted to host');
-                    }
+                log(`[ADMIN] showAllAnswers emit: ${lettered.length} answers`);
+                hostSocket.emit('showAllAnswers', lettered);
+                // only show answers on screen when all players have submitted
+                if (room.submitted.length === playersNow.length) {
+                    emitToScreens(ACTIVE_ROOM, 'showAllAnswers', lettered);
+                    log('[ADMIN] showAllAnswers emitted to host and screens (all answers in)');
+                } else {
+                    log('[ADMIN] showAllAnswers emitted to host');
+                }
             }
         }
 
@@ -1289,88 +1292,88 @@ io.on('connection', (socket) => {
         }
     });
 
-        // Admin removes a player from the game (works for online, offline, and bots)
-        socket.on('removePlayer', (targetSocketId) => {
-            if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
-            const room = rooms[ACTIVE_ROOM];
-            const target = io.sockets.sockets.get(targetSocketId);
-        
-            if (target && room.players[targetSocketId]) {
-                const playerName = room.players[targetSocketId].name;
-            
-                // Remove from players list
-                delete room.players[targetSocketId];
-            
-                // Notify the removed player
-                target.emit('playerRemoved', { message: `Du wurdest vom Admin aus dem Spiel entfernt.` });
-                target.leave(ACTIVE_ROOM);
-            
-                // Update players list for everyone
-                emitPlayerLists(ACTIVE_ROOM);
-            
-                log(`Admin removed player ${playerName} (${targetSocketId})`);
-            } else if (room.players[targetSocketId]) {
-                // Target socket not found (offline or bot) — remove entry and clean up state
-                const playerInfo = room.players[targetSocketId];
-                const playerName = playerInfo.name;
-                const wasBot = !!playerInfo.isBot;
-                const wasOffline = !!playerInfo.offline;
-                delete room.players[targetSocketId];
-                // cleanup submitted/answers/votes/points
-                room.answers = (room.answers || []).filter(a => a.name !== playerName);
-                room.submitted = (room.submitted || []).filter(n => n !== playerName);
-                if (room.votes) Object.keys(room.votes).forEach(k => { if (k === playerName) delete room.votes[k]; });
-                if (room.points && Object.prototype.hasOwnProperty.call(room.points, playerName)) delete room.points[playerName];
-                emitPlayerLists(ACTIVE_ROOM);
-                broadcastUpdateSubmitted(ACTIVE_ROOM);
-                log(`Admin removed ${wasBot ? 'bot' : (wasOffline ? 'offline player' : 'player without socket')} ${playerName} (${targetSocketId})`);
-            }
-        });
+    // Admin removes a player from the game (works for online, offline, and bots)
+    socket.on('removePlayer', (targetSocketId) => {
+        if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
+        const room = rooms[ACTIVE_ROOM];
+        const target = io.sockets.sockets.get(targetSocketId);
+
+        if (target && room.players[targetSocketId]) {
+            const playerName = room.players[targetSocketId].name;
+
+            // Remove from players list
+            delete room.players[targetSocketId];
+
+            // Notify the removed player
+            target.emit('playerRemoved', { message: `Du wurdest vom Admin aus dem Spiel entfernt.` });
+            target.leave(ACTIVE_ROOM);
+
+            // Update players list for everyone
+            emitPlayerLists(ACTIVE_ROOM);
+
+            log(`Admin removed player ${playerName} (${targetSocketId})`);
+        } else if (room.players[targetSocketId]) {
+            // Target socket not found (offline or bot) — remove entry and clean up state
+            const playerInfo = room.players[targetSocketId];
+            const playerName = playerInfo.name;
+            const wasBot = !!playerInfo.isBot;
+            const wasOffline = !!playerInfo.offline;
+            delete room.players[targetSocketId];
+            // cleanup submitted/answers/votes/points
+            room.answers = (room.answers || []).filter(a => a.name !== playerName);
+            room.submitted = (room.submitted || []).filter(n => n !== playerName);
+            if (room.votes) Object.keys(room.votes).forEach(k => { if (k === playerName) delete room.votes[k]; });
+            if (room.points && Object.prototype.hasOwnProperty.call(room.points, playerName)) delete room.points[playerName];
+            emitPlayerLists(ACTIVE_ROOM);
+            broadcastUpdateSubmitted(ACTIVE_ROOM);
+            log(`Admin removed ${wasBot ? 'bot' : (wasOffline ? 'offline player' : 'player without socket')} ${playerName} (${targetSocketId})`);
+        }
+    });
 
     // Admin toggles Grok permission for a player
     socket.on('togglePlayerGrok', (data) => {
         if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
         const room = rooms[ACTIVE_ROOM];
         const { playerId, enabled } = data;
-        
+
         if (room.players[playerId]) {
             room.players[playerId].grokEnabled = !!enabled;
             log(`Admin ${enabled ? 'enabled' : 'disabled'} Grok for ${room.players[playerId].name}`);
-            
+
             // Notify the specific player of their grokEnabled status
             const targetSocket = io.sockets.sockets.get(playerId);
             if (targetSocket) {
                 targetSocket.emit('grokPermissionUpdate', { grokEnabled: !!enabled });
             }
-            
+
             // Update admin list to reflect the change
             emitPlayerLists(ACTIVE_ROOM);
         }
     });
 
-        // Admin sets points for a player
-        socket.on('setPlayerPoints', (data) => {
-            if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
-            const room = rooms[ACTIVE_ROOM];
-            const playerId = data && data.playerId;
-            const playerNameInput = data && data.playerName;
-            let points = Number(data && data.points);
-            if (!isFinite(points)) return;
-            points = Math.round(points);
-            if (points < 0) points = 0;
-            let playerName = '';
-            if (playerId && room.players[playerId] && room.players[playerId].name) {
-                playerName = room.players[playerId].name;
-            } else if (typeof playerNameInput === 'string' && playerNameInput.trim()) {
-                playerName = playerNameInput.trim();
-            } else {
-                return;
-            }
-            if (!room.points) room.points = {};
-            room.points[playerName] = points;
-            emitWithSeqToRoom(ACTIVE_ROOM, 'pointsUpdate', room.points || {});
-            log(`Admin set points: ${playerName} = ${points}`);
-        });
+    // Admin sets points for a player
+    socket.on('setPlayerPoints', (data) => {
+        if (!socket.isHost || !rooms[ACTIVE_ROOM]) return;
+        const room = rooms[ACTIVE_ROOM];
+        const playerId = data && data.playerId;
+        const playerNameInput = data && data.playerName;
+        let points = Number(data && data.points);
+        if (!isFinite(points)) return;
+        points = Math.round(points);
+        if (points < 0) points = 0;
+        let playerName = '';
+        if (playerId && room.players[playerId] && room.players[playerId].name) {
+            playerName = room.players[playerId].name;
+        } else if (typeof playerNameInput === 'string' && playerNameInput.trim()) {
+            playerName = playerNameInput.trim();
+        } else {
+            return;
+        }
+        if (!room.points) room.points = {};
+        room.points[playerName] = points;
+        emitWithSeqToRoom(ACTIVE_ROOM, 'pointsUpdate', room.points || {});
+        log(`Admin set points: ${playerName} = ${points}`);
+    });
 
     // Admin sets number of server-side bots
     socket.on('setBots', (count) => {
@@ -1488,7 +1491,7 @@ io.on('connection', (socket) => {
         log(`Spieler ${old} hat Namen geändert zu ${name}`);
     });
 
-    
+
 
     // Admin requests to reveal/present results to all players
     socket.on('presentResults', () => {
@@ -1561,12 +1564,12 @@ io.on('connection', (socket) => {
         const room = rooms[ACTIVE_ROOM];
         const playersNow = currentPlayersExcludingHost(ACTIVE_ROOM);
         const allAnswersIn = room.submitted.length === playersNow.length;
-        
+
         // Mische Antworten wenn noch nicht finalisiert
         if (!room.answersFinalized) {
             let allAnswers = [...room.answers, { name: 'Echte Definition', text: realAnswer.trim() }];
             room.shuffledAnswers = shuffleArray(allAnswers);
-            
+
             // Wenn alle Antworten da sind, finalisiere die Reihenfolge
             if (allAnswersIn) {
                 room.answersFinalized = true;
@@ -1581,7 +1584,7 @@ io.on('connection', (socket) => {
                 room.shuffledAnswers.push({ name: 'Echte Definition', text: realAnswer.trim() });
             }
         }
-        
+
         // Sende gemischte Antworten an Admin
         const answersToShow = room.shuffledAnswers || [...room.answers, { name: 'Echte Definition', text: realAnswer.trim() }];
         const lettered = answersToShow.map((a, i) => ({
@@ -1651,26 +1654,26 @@ io.on('connection', (socket) => {
         if (socket.roomCode && rooms[socket.roomCode]) {
             const room = rooms[socket.roomCode];
             const player = room.players[socket.id];
-            
+
             if (player && !socket.isHost) {
                 // Markiere Spieler als offline statt zu löschen
                 player.offline = true;
                 log(`[DISCONNECT] ${socket.playerName} (${socket.id}) offline in room=${socket.roomCode} - warte 5 Minuten auf Reconnect`);
-                
+
                 // Setze 5-Minuten Timeout für endgültige Entfernung
                 player.disconnectTimeout = setTimeout(() => {
                     if (room.players[socket.id] && room.players[socket.id].offline) {
                         delete room.players[socket.id];
                         room.submitted = room.submitted.filter(n => n !== socket.playerName);
                         log(`[CLEANUP] ${socket.playerName} (${socket.id}) endgültig entfernt nach 5 Minuten Offline in room=${socket.roomCode}`);
-                        
+
                         // emit updated lists
                         emitPlayerLists(socket.roomCode);
                         broadcastUpdateSubmitted(socket.roomCode);
                         emitWithSeqToRoom(socket.roomCode, 'pointsUpdate', room.points || {});
                     }
                 }, 5 * 60 * 1000); // 5 Minuten
-                
+
                 // emit updated lists mit offline markierung
                 emitPlayerLists(socket.roomCode);
                 broadcastUpdateSubmitted(socket.roomCode);
@@ -1725,7 +1728,7 @@ io.on('connection', (socket) => {
             name: a.name,
             color: colorForName(room, a.name)
         }));
-        
+
         // Sende gemischte Antworten an Admin zur Anzeige
         if (room.host) {
             const hostSocket = io.sockets.sockets.get(room.host);
@@ -1816,7 +1819,7 @@ server.listen(PORT, () => {
         addresses.forEach(addr => log(`  → http://${addr}:${PORT}`));
     }
     log(`  → http://localhost:${PORT}`);
-    
+
     // Load term usage tracking and canned answers on startup
     loadTermUsage();
     _loadCannedAnswers();

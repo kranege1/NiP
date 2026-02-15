@@ -57,3 +57,4 @@
 2025-12-30T10:21:30.007Z | NiP - V215 | Code-Updates angewendet
 2025-12-30T11:52:32.787Z | NiP - V216 | Code-Updates angewendet
 2026-01-03T16:12:16.236Z | NiP - V217 | Code-Updates angewendet
+2026-02-15T15:40:59.940Z | NiP - V218 | Server-Logik aktualisiert · Bootstrap-Wiring verbessert · Admin-UI & Bot-Management · UI & Spielerlisten sortiert · Client-Core & Versioning · Spiellogik & Präsentation · Screen-View & Farben · HTML-Template · Screen-Template
