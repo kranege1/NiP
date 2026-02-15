@@ -194,46 +194,44 @@ document.addEventListener('DOMContentLoaded', () => {
         qrOverlay.style.display = 'none';
       });
     }
-  }
-    if (endVotingBtn) endVotingBtn.addEventListener('click', () => emitBuffered('endVoting', {}));
-} catch (_) { }
+  } catch (_) { }
 
-// Admin: present results
-try {
-  const presentBtn = document.getElementById('presentBtn');
-  if (presentBtn) presentBtn.addEventListener('click', () => emitBuffered('presentResults', {}));
-} catch (_) { }
+  // Admin: present results
+  try {
+    const presentBtn = document.getElementById('presentBtn');
+    if (presentBtn) presentBtn.addEventListener('click', () => emitBuffered('presentResults', {}));
+  } catch (_) { }
 
-// Clear buttons for inputs
-try {
-  const clearPlayerNameBtn = document.getElementById('clearPlayerNameBtn');
-  const clearAnswerBtn = document.getElementById('clearAnswerBtn');
-  const clearQuestionBtn = document.getElementById('clearQuestionBtn');
-  const clearRealAnswerBtn = document.getElementById('clearRealAnswerBtn');
-  if (clearPlayerNameBtn) clearPlayerNameBtn.addEventListener('click', () => clearInput('playerName'));
-  if (clearAnswerBtn) clearAnswerBtn.addEventListener('click', () => clearInput('answerInput'));
-  if (clearQuestionBtn) clearQuestionBtn.addEventListener('click', () => clearInput('questionInput'));
-  if (clearRealAnswerBtn) clearRealAnswerBtn.addEventListener('click', () => clearInput('realAnswerInput'));
-} catch (_) { }
+  // Clear buttons for inputs
+  try {
+    const clearPlayerNameBtn = document.getElementById('clearPlayerNameBtn');
+    const clearAnswerBtn = document.getElementById('clearAnswerBtn');
+    const clearQuestionBtn = document.getElementById('clearQuestionBtn');
+    const clearRealAnswerBtn = document.getElementById('clearRealAnswerBtn');
+    if (clearPlayerNameBtn) clearPlayerNameBtn.addEventListener('click', () => clearInput('playerName'));
+    if (clearAnswerBtn) clearAnswerBtn.addEventListener('click', () => clearInput('answerInput'));
+    if (clearQuestionBtn) clearQuestionBtn.addEventListener('click', () => clearInput('questionInput'));
+    if (clearRealAnswerBtn) clearRealAnswerBtn.addEventListener('click', () => clearInput('realAnswerInput'));
+  } catch (_) { }
 
-// Player Grok button
-try {
-  const playerGrokBtn = document.getElementById('playerGrokBtn');
-  if (playerGrokBtn && typeof playerGrokPrompt === 'function') {
-    playerGrokBtn.addEventListener('click', playerGrokPrompt);
-  }
-} catch (_) { }
+  // Player Grok button
+  try {
+    const playerGrokBtn = document.getElementById('playerGrokBtn');
+    if (playerGrokBtn && typeof playerGrokPrompt === 'function') {
+      playerGrokBtn.addEventListener('click', playerGrokPrompt);
+    }
+  } catch (_) { }
 
-// Hard reload
-try {
-  const hardReloadBtn = document.getElementById('hardReloadBtn');
-  if (hardReloadBtn) {
-    hardReloadBtn.addEventListener('click', () => {
-      const href = window.location.href.split('#')[0];
-      const cleaned = href.replace(/([&?])ts=\d+/, '').replace(/\?&/, '?');
-      const delim = cleaned.includes('?') ? '&' : '?';
-      window.location.href = `${cleaned}${delim}ts=${Date.now()}`;
-    });
-  }
-} catch (_) { }
+  // Hard reload
+  try {
+    const hardReloadBtn = document.getElementById('hardReloadBtn');
+    if (hardReloadBtn) {
+      hardReloadBtn.addEventListener('click', () => {
+        const href = window.location.href.split('#')[0];
+        const cleaned = href.replace(/([&?])ts=\d+/, '').replace(/\?&/, '?');
+        const delim = cleaned.includes('?') ? '&' : '?';
+        window.location.href = `${cleaned}${delim}ts=${Date.now()}`;
+      });
+    }
+  } catch (_) { }
 });
