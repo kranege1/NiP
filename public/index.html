@@ -31,13 +31,19 @@
     <div id="grokNotificationContainer"></div>
 
     <div id="playersPanel">
-        <button id="hardReloadBtn" class="reset tiny-btn" title="App neu starten"><svg class="icon" aria-hidden="true">
-                <use href="/icons.svg#reload"></use>
-            </svg></button>
-        <button id="qrBtn" class="reset tiny-btn" title="QR-Code anzeigen" style="top: 50px;"><svg class="icon"
-                aria-hidden="true">
-                <use href="/icons.svg#qrcode"></use>
-            </svg></button>
+        <!-- Controls container: absolute top-right, flex column -->
+        <div
+            style="position: absolute; top: 8px; right: 8px; display: flex; flex-direction: column; gap: 10px; z-index: 20;">
+            <button id="hardReloadBtn" class="reset tiny-btn" title="App neu starten"
+                style="position: static; margin: 0;"><svg class="icon" aria-hidden="true">
+                    <use href="/icons.svg#reload"></use>
+                </svg></button>
+            <button id="qrBtn" class="reset tiny-btn" title="QR-Code anzeigen" style="position: static; margin: 0;"><svg
+                    class="icon" aria-hidden="true">
+                    <use href="/icons.svg#qrcode"></use>
+                </svg></button>
+        </div>
+
         <h3>Aktuelle Spieler</h3>
         <div id="playersList">Keine verbunden</div>
         <button id="resetPointsBtn" class="reset" style="display:none; margin-top:10px; width:auto;"><svg class="icon"
