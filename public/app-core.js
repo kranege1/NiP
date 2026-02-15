@@ -33,12 +33,12 @@ document.addEventListener('visibilitychange', async () => {
 socket.on('disconnect', (reason) => {
     console.warn('[APP] Socket disconnected:', reason);
     joined = false;
-    
+
     // Update visual status
     if (connectionTimeout) clearTimeout(connectionTimeout);
     const statusEl = document.getElementById('connectionStatusText');
-    if (statusEl) { 
-        statusEl.innerHTML = '⌛ Verbindung verloren...'; 
+    if (statusEl) {
+        statusEl.innerHTML = '⌛ Verbindung verloren...';
         statusEl.style.color = '#ff9800'; // Orange
     }
 });
@@ -46,10 +46,10 @@ socket.on('disconnect', (reason) => {
 socket.on('connect', () => {
     console.log('[APP] Connected');
     flushOutbox();
-    
+
     // Soft Reconnect: Just Auto-Join, do NOT reload page
     attemptAutoJoin();
-    
+
     // Request Wake Lock on connection
     requestWakeLock();
 });
@@ -82,15 +82,15 @@ const colorCache = new Map();
 function normalizeName(name) {
     const raw = String(name || '').trim();
     // Strip surrounding parentheses often used in answer reveal "(#Name)"
-    const unwrapped = raw.replace(/^\((.*)\)$/,'$1');
+    const unwrapped = raw.replace(/^\((.*)\)$/, '$1');
     return unwrapped
-        .replace(/^#/,'')
-        .replace(/\s*\(offline\)\s*$/i,'')
+        .replace(/^#/, '')
+        .replace(/\s*\(offline\)\s*$/i, '')
         .trim();
 }
 
 // Client-side color palette + deterministic picker (matches server)
-const CLIENT_COLOR_PALETTE = ['#e91e63','#9c27b0','#3f51b5','#03a9f4','#009688','#8bc34a','#ff9800','#795548','#607d8b','#f44336'];
+const CLIENT_COLOR_PALETTE = ['#e91e63', '#9c27b0', '#3f51b5', '#03a9f4', '#009688', '#8bc34a', '#ff9800', '#795548', '#607d8b', '#f44336'];
 
 function clientPickColorForName(name) {
     // Deterministic fallback hash so missing server colors don't all become pink
@@ -181,7 +181,7 @@ try {
 /* Utility functions */
 function debounce(fn, delay = 300) {
     let t;
-    return function(...args) {
+    return function (...args) {
         clearTimeout(t);
         t = setTimeout(() => fn.apply(this, args), delay);
     };
@@ -270,7 +270,7 @@ function saveStateSync() {
             const blob = new Blob([body], { type: 'application/json' });
             navigator.sendBeacon(url, blob);
         } else {
-            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(()=>{});
+            fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => { });
         }
     } catch (e) {
         console.warn('saveState failed', e);
@@ -430,8 +430,8 @@ function updateGrokButtonVisibility() {
     }
 }
 /* Admin joined event */
-socket.on('adminJoined', () => { 
-    isHost = true; 
+socket.on('adminJoined', () => {
+    isHost = true;
     if (typeof populateAreaFilter === 'function') populateAreaFilter();
     const areaFilter = document.getElementById('areaFilter');
     if (areaFilter && typeof syncActivityMask === 'function') syncActivityMask(areaFilter.value);
@@ -454,7 +454,16 @@ socket.on('joinedRoom', ({ isHost: host }) => {
 
 socket.on('playerRemoved', (data) => {
     alert(data.message || 'Du wurdest aus dem Spiel entfernt.');
-    setTimeout(() => location.reload(), 1000);
+
+    // Clear session data so auto-join doesn't trigger on reload
+    const nameEl = document.getElementById('playerName');
+    if (nameEl) nameEl.value = '';
+    myPlayerName = '';
+
+    // Persist empty state to server so it doesn't restore name on reload
+    saveStateSync();
+
+    setTimeout(() => location.reload(), 500);
 });
 
 socket.on('forceRename', async () => {
